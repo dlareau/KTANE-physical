@@ -68,7 +68,7 @@ class KSerialClient {
     uint8_t   _client_number;
     uint8_t   _solve_waiting;
     uint8_t   _strike_waiting;
-    uint8_t   _reset_happened;
+    uint8_t   _state;
     uint8_t   _batteries;
     uint8_t   _indicators;
     uint8_t   _ports;

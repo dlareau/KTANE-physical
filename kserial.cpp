@@ -207,29 +207,35 @@ int _respond_to_master(){
 }
 
 int KSerialClient::sendStrike() {
-
+  _strike_waiting++;
+  return 1;
 }
 
 int KSerialClient::sendSolve() {
-
+  _solve_waiting++;
+  return 1;
 }
 
 int KSerialClient::dataAvailable() {
-
+  return (_state == 7);
 }
 
 int KSerialClient::get_batteries() {
-
+  return _batteries;
 }
 
 int KSerialClient::get_indicators() {
-
+  return _indicators;
 }
 
 int KSerialClient::get_ports() {
-
+  return _ports;
 }
 
 int KSerialClient::get_reset() {
-
+  if(_has_reset){
+    _has_reset = 0;
+    return 1;
+  }
+  return 0;
 }
