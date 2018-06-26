@@ -2,6 +2,43 @@
 #include "kserial.h"
 #include <string.h>
 
+/*
+Improvements for the future:
+ - Switch to polling architecture so serial doesn't block
+ - make broadcast just use a sentinel broadcast id to avoid repeat packets
+ - implement serial number
+  - on that note, maybe combine other data if possible?
+ - Support multiple data packets in one message
+ - do more with ACK/NAK such that they actually matter
+ - Make client identification more active
+  - with more active ident, allow information subscription to save comms
+*/
+
+
+int readPacket(Stream &s, char *buf) {
+  unsigned long startMillis = millis();
+  int done = 0;
+  int in_packet = 0;
+  int index = 0;
+  while((millis() - startMillis) < TIMEOUT) {
+    if(s.available() == 0) {
+      continue;
+    }
+    rc = s.read()
+    if(in_packet) {
+      buf[index] = rc;
+      index++;
+      if(rc == (char)end || index >= MAX_MSG_LEN) {
+        buf[index] = '\0';
+        return index;
+      }
+    } else if(rc == (char)START) {
+      in_packet = 1;
+    }
+  }
+  return 0;
+}
+
 KSerialMaster::KSerialMaster(Stream &port) {
   _stream = port;
   _stream.setTimeout(TIMEOUT);
@@ -33,8 +70,8 @@ int _master_to_client(uint8_t client, char *data){
     _stream.print(PARITY3(client, WRITE, data_parity));
     _stream.print(END);
 
-    // Get response
-    r_bytes = _stream.readBytesUntil(END, buf, MAX_MSG_LEN);
+    // Get response 
+    r_bytes = _stream.readPacket(_stream, buf);
     if(r_bytes == 0){
       return 0;
     }
@@ -46,8 +83,8 @@ int _master_to_client(uint8_t client, char *data){
     }
 
     // Check message integrity
-    if(r_bytes > 2 || buf[0] == START || buf[r_bytes-1] == END ||
-          data_parity == 0 || buf[1] == ACK) {
+    if(r_bytes > 2 && buf[0] == START && buf[r_bytes-1] == END &&
+          data_parity == 0 && buf[1] == ACK) {
       return r_bytes; // Message integrity good: return success
     } else {
       attempts++; // Message integrity bad: try again
@@ -74,7 +111,7 @@ int _client_to_master(uint8_t client, char *data) {
     _stream.print(END);
 
     // Get response
-    r_bytes = _stream.readBytesUntil(END, buf, MAX_MSG_LEN);
+    r_bytes = _stream.readPacket(_stream, buf);
     if(r_bytes == 0){
       return 0;
     }
@@ -86,11 +123,15 @@ int _client_to_master(uint8_t client, char *data) {
     }
 
     // Check message integrity
-    if(r_bytes > 2 || buf[0] == START || buf[r_bytes-1] == END || data_parity == 0) {
+    if(r_bytes > 2 && buf[0] == START && buf[r_bytes-1] == END && data_parity == 0) {
       strncpy(data, buf+1, r_bytes-3);
       data[r_bytes-2] = 0;
-      _stream.print(ACK); // Copy data, null terminate, return success
-      return r_bytes-3;
+      _stream.print(START);
+      _stream.print(client);
+      _stream.print(ACK); 
+      _stream.print(PARITY2(client, ACK));
+      _stream.print(END);
+      return r_bytes-3;// Copy data, null terminate, return success
     } else {
       _stream.print(NAK);
       attempts++; // Message integrity bad: try again
@@ -203,7 +244,96 @@ KSerialClient::KSerialClient(Stream &port, uint8_t client_number) {
 }
 
 int _respond_to_master(){
+  buf[MAX_MSG_LEN];
+  int r_bytes;
+  char *data;
+  uint8_t data_parity;
+  int err = 0;
 
+  while(_stream.available()) {
+    r_bytes = readPacket(_stream, buf);
+    if(r_bytes == 0){
+      break;
+    } else if(r_bytes <= 2) {
+      continue;
+    }
+
+    for(int i = 0; i < r_bytes; i++){
+      data_parity = data_parity ^ buf[i];
+    }
+    if(data_parity != 0) {
+      continue;
+    }
+
+    if(buf[0] == START && buf[r_bytes-1] == END && buf[1] == _client_number){
+      switch(buf[2]){
+        case ACK:
+          if(_waiting_type == SET_SOLVE) {
+            _solve_waiting--;
+            _waiting_type = 0;
+          } else if(_waiting_type == SET_STRIKE) {
+            _strike_waiting--;
+          } else if(_waiting_type == NO_DATA){
+            ; // Nothing to do...
+          } else {
+            err++;
+          }
+          _waiting_type = 0;
+          break;
+        case READ:
+          if(_solve_waiting) {
+            data = SET_SOLVE;
+          } else if(_strike_waiting){
+            data = SET_STRIKE;
+          } else {
+            data = NO_DATA;
+          }
+          _waiting_type = data;
+          _stream.print(START);
+          _stream.print(data);
+          _stream.print(PARITY1(data));
+          _stream.print(END);
+          break;
+        case WRITE:
+          switch(buf[3]){
+            case STRIKES:
+              _strikes = buf[4]
+              break;
+            case RESET:
+              _strikes = 0;
+              _state = 0;
+              _batteries = 0;
+              _indicators = 0;
+              _ports = 0;
+              _solve_waiting = 0;
+              _strike_waiting = 0;
+              break;
+            case BATTERIES:
+              _batteries = buf[4]
+              _state = _state & 1;
+              break;
+            case INDICATORS:
+              _indicators = buf[4]
+              _state = _state & 2;
+              break;
+            case PORTS:
+              _ports = buf[4]
+              _state = _state & 4;
+              break;
+          }
+          break;
+        default:
+          err++;
+      }
+    } else {
+      continue;
+    }
+  }
+
+  if(err > 0){
+    return 0;
+  }
+  return 1;
 }
 
 int KSerialClient::sendStrike() {

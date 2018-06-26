@@ -24,8 +24,10 @@
 
 #define TIMEOUT 50
 #define MAX_CLIENTS 16
-#define MAX_MSG_LEN 7
+#define MAX_MSG_LEN 8
 #define NUM_RETRIES 3
+
+int readPacket(Stream s, char *buf);
 
 class KSerialMaster {
   public:
@@ -65,6 +67,7 @@ class KSerialClient {
 
   private:
     Stream    _stream;
+    uint8_t   _waiting_type; //1 for solve, 2 for strike, 3 for NO_DATA
     uint8_t   _client_number;
     uint8_t   _solve_waiting;
     uint8_t   _strike_waiting;
@@ -79,7 +82,7 @@ class KSerialClient {
 Client -> Master:
 - Master sends "{START}{ADDRESS}R{PARITY}{END}"
 - Client sends "{START}{DATA}{PARITY}{END}"
-- Master sends "{START}{ACK/NAK}{PARITY}{END}"
+- Master sends "{START}{ADDRESS}{ACK/NAK}{PARITY}{END}"
 - If NAK, repeat steps 2 and 3.
 
 Master -> Client:
