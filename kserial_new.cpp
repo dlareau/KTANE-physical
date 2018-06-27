@@ -1,22 +1,45 @@
+/** @file kserial_new.cpp
+ *  @brief The KSerial library implementation
+ *
+ *  Future improvements:
+ *    - Switch queues to FIFO rather than LIFO
+ *    - Switch to all length based binary processing to allow nulls
+ *    - Check read/write packet return codes everywhere...
+ *    - Have the address be broken out into the packet datatype.
+ *
+ *  @author Dillon Lareau (dlareau)
+ */
+
 #include "Arduino.h"
 #include "kserial.h"
 #include <string.h>
 
-// Improvements:
-// Switch queues to FIFO rather than LIFO
-// Switch to all length based binary processing to allow nulls
-// Check read/write packet return codes everywhere...
-
-// returns 1 for good packets, -1 for malformed packet, and 0 for no new data
-int readPacket(Stream s, char *out_message){
+/** @brief Reads a packet from the specified stream if one is available
+ *
+ *  If the data in the stream contains a full packet, the packet will be put
+ *  into the return buffer and the return code will indicate it's validity.
+ *  If there is not enough data in the stream buffer for a full packet, the
+ *  function not populate the buffer and the return code will indicate no new
+ *  packet.
+ *
+ *  Returned data DOES include the address as the first byte of the buffer.
+ *
+ *  @param s      The stream object from which to read
+ *  @param buffer A pointer to the buffer to populate with the possible packet
+ *  @return A status code indicating the status of the packet:
+ *            0 - No new packet, buffer is returned empty.
+ *            1 - New packet in buffer, packet is valid.
+ *           -1 - New packet in buffer, packet failed parity check.
+ *
+ *  @bug Function does not currently out-of-order start/end bytes well. 
+ */
+int readPacket(Stream &s, char *buffer){
   static int in_packet = 0;
   static int index = 0;
   static char buf[MAX_MSG_LEN+1];
   static char data_parity = 0;
   char rc;
 
-
-  // TODO: Add duplicate start or end detection
   while (s.available() > 0) {
     rc = s.read();
 
@@ -27,8 +50,8 @@ int readPacket(Stream s, char *out_message){
         index++;
       }
       if(rc == END || index >= MAX_MSG_LEN){
-        buf[--index] = '\0'; //purposefully overwrite parity.
-        strcpy(out_message, buf);
+        buf[--index] = '\0'; //purposefully overwrite parity byte.
+        strcpy(buffer, buf);
         index = 0;
         in_packet = 0;
         data_parity = 0;
@@ -47,8 +70,25 @@ int readPacket(Stream s, char *out_message){
   return 0;
 }
 
+/** @brief Writes a packet to the specified stream.
+ *
+ *  
+ *  
+ *  
+ *  
+ *  
+ *
+ *  @param s      The stream object from which to read
+ *  @param buffer A pointer to the buffer to populate with the possible packet
+ *  @return A status code indicating the status of the packet:
+ *            0 - No new packet, buffer is returned empty.
+ *            1 - New packet in buffer, packet is valid.
+ *           -1 - New packet in buffer, packet failed parity check.
+ *
+ *  @bug Function does not currently out-of-order start/end bytes well. 
+ */
 // Message does need to be null terminated, the null terminator will not be sent.
-int sendPacket(Stream s, char *message){
+int sendPacket(Stream &s, char *message){
   char data_parity = 0;
   for (int i = 0; i < strlen(message); i++) {
     data_parity = data_parity ^ (uint8_t)data[i];
@@ -120,7 +160,7 @@ int KSerialMaster::getClients(uint8_t *clients){
   return _num_clients;
 }
 
-int KSerialMaster::do_serial(){
+int KSerialMaster::doSerial(){
   static unsigned long last_millis;
   static uint8_t num_attempts;
   static uint8_t client_index = 0;
@@ -267,7 +307,7 @@ int KSerialMaster::getData(char *buffer){
   return 1;
 }
 
-int KSerialClient::do_serial(){
+int KSerialClient::doSerial(){
   static unsigned long last_millis;
   static uint8_t num_attempts;
   static char    last_msg[MAX_MSG_LEN+1];

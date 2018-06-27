@@ -1,3 +1,31 @@
+/** @file kserial_new.h
+ *  @brief Headers and definitions for the KSerial Library
+ *
+ *  The KSerial library adds a layer-3/4 interface intended to be used on top
+ *  of a serial UART multi-drop bus. KSerial adds addressing and message 
+ *  acknowledgment in a master/client configuration. Clients are polled for
+ *  data. 
+ *
+ *  The library is divided into Master and Client classes. In order for constant
+ *  data flow, all communicating parties should call "doSerial" often. Functions
+ *  in the KSerial library do not block and all but getClients should be
+ *  execute relatively quickly.
+ *
+ *  Currently, only bytes with values between 1 and 127 inclusive are allowed 
+ *  to be sent via this protocol. Bytes above 127 will work, but could cause 
+ *  errors if they are reserved bytes (see #define section below) and support
+ *  for sending 0's is hopefully coming soon.
+ *
+ *  Definitions:
+ *    - Packet: Data in the form of {START}{MESSAGE}{PARITY}{END}
+ *      - Currently, the first byte of the message is the client address
+ *    - Valid 
+ *
+ *
+ *
+ *
+ *  @author Dillon Lareau (dlareau)
+ */
 #pragma once
 #include "Arduino.h"
 
@@ -22,8 +50,8 @@
 #define CLIENT_WAITING 0
 #define CLIENT_SENT 1
 
-int readPacket(Stream s, char *out_message);
-int sendPacket(Stream s, char *message);
+int readPacket(Stream &s, char *buffer);
+int sendPacket(Stream &s, char *message);
 
 class KSerialMaster {
   public:
@@ -62,8 +90,8 @@ class KSerialClient {
 };
 
 /*
-Addresses:      0: Master
-            1-127: Clients
+Addresses:    127: Master
+            1-126: Clients
 Bytes greater than 127 are control packets.
 
 Packet: {START}{ADDRESS}{MESSAGE}{PARITY}{END}
