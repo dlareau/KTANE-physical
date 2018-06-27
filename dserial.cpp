@@ -78,13 +78,13 @@ int readPacket(Stream &s, char *buffer){
  */
 int sendPacket(Stream &s, char *message){
   char data_parity = 0;
-  for (int i = 0; i < strlen(message); i++) {
-    data_parity = data_parity ^ (uint8_t)data[i];
+  for (int i = 0; message[i] != 0; i++) {
+    data_parity = data_parity ^ (uint8_t)message[i];
   }
-  _stream.print(START);
-  _stream.print(message);
-  _stream.print((START ^ data_parity ^ END));
-  _stream.print(END);
+  s.print(START);
+  s.print(message);
+  s.print((START ^ data_parity ^ END));
+  s.print(END);
   return 1;
 }
 
@@ -126,7 +126,7 @@ int DSerialMaster::sendData(uint8_t client_id, char *data){
   strcpy(new_message+2, data);
   new_message[0] = (char)client_id;
   new_message[1] = (char)WRITE;
-  out_messages[_num_out_messages++] = new_message;
+  _out_messages[_num_out_messages++] = new_message;
   return 1;
 }
 
@@ -160,13 +160,13 @@ int DSerialMaster::getClients(uint8_t *clients){
   char message[3] = {(char)1, (char)PING, '\0'};
 
   while(_state != MASTER_WAITING){
-    do_serial();
+    doSerial();
   }
 
   for (int i = 1; i < MAX_CLIENTS; i++) {
     message[0] = (char)i;
     sendPacket(_stream, message);
-    start_millis; = millis();
+    start_millis = millis();
     while(millis() - start_millis < TIMEOUT){
       int result = readPacket(_stream, temp);
       if(result > 0){
@@ -197,11 +197,11 @@ int DSerialMaster::doSerial(){
     free(buffer);
   }
   if(result == -1) {            // Bad data, send NAK.
-    short_msg[0] = last_msg[0];
+    short_msg[0] = current_msg[0];
     short_msg[1] = (char)NAK;
     sendPacket(_stream, short_msg);
     strcpy(current_msg, short_msg);
-    continue;
+    return 1;
   }
 
   switch(_state){
@@ -209,7 +209,7 @@ int DSerialMaster::doSerial(){
     case MASTER_WAITING:
       if(_num_out_messages > 0){
         strcpy(current_msg, _out_messages[_num_out_messages-1]);
-        free(_out_messages[--_num_out_messages])
+        free(_out_messages[--_num_out_messages]);
         _state = MASTER_ACK;
       } else {
         client_index = (client_index + 1) % _num_clients;
@@ -266,7 +266,7 @@ int DSerialMaster::doSerial(){
       } else if(result == 1) {      // Useful packet
         if(buffer[1] == ACK){
           free(buffer);
-          _state = _WAITING;
+          _state = MASTER_WAITING;
         } else {
           free(buffer);
           short_msg[1] = (char)NAK;
@@ -314,8 +314,8 @@ int DSerialClient::sendData(char *data){
     return 0;
   }
   strcpy(new_message+1, data);
-  new_message[0] = (char)client_id;
-  out_messages[_num_out_messages++] = new_message;
+  new_message[0] = (char)MASTER_ID;
+  _out_messages[_num_out_messages++] = new_message;
   return 1;
 }
 
@@ -324,7 +324,7 @@ int DSerialClient::sendData(char *data){
  *  @param buffer A string to populate with the possible data
  *  @return A status code indicating whether data was retrieved
  */
-int DSerialMaster::getData(char *buffer){
+int DSerialClient::getData(char *buffer){
   if(_num_in_messages == 0){
     return 0;
   }
@@ -335,7 +335,6 @@ int DSerialMaster::getData(char *buffer){
 }
 
 int DSerialClient::doSerial(){
-  static unsigned long last_millis;
   static char    current_msg[MAX_MSG_LEN+1];
   char short_msg[3] = {(char)MASTER_ID, '\0', '\0'};
 
@@ -351,7 +350,7 @@ int DSerialClient::doSerial(){
   }
   if(buffer[0] != _client_number){
     free(buffer);
-    return 1
+    return 1;
   }
   if(buffer[1] == NAK){
     free(buffer);
@@ -364,7 +363,7 @@ int DSerialClient::doSerial(){
     case CLIENT_WAITING:
       if(buffer[1] == READ and _num_out_messages > 0){
         strcpy(current_msg, _out_messages[_num_out_messages-1]);
-        free(_out_messages[--_num_out_messages])
+        free(_out_messages[--_num_out_messages]);
         _state = CLIENT_SENT;
       } else if(buffer[1] == WRITE) {
         _in_messages[_num_in_messages++] = buffer;
