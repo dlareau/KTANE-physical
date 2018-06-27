@@ -2,6 +2,9 @@
  *  @brief The DSerial library implementation
  *
  *  @author Dillon Lareau (dlareau)
+ *
+ *  @bug Return codes are checked less often than they should be...
+ *  @bug Library does not currently deal with too many in_messages.
  */
 
 #include "Arduino.h"
@@ -104,24 +107,18 @@ DSerialMaster::DSerialMaster(Stream &port){
 
 /** @brief sends a data string to the specified client.
  *
- *  If the data in the stream contains a full packet, the packet will be put
- *  into the return buffer and the return code will indicate it's validity.
- *  If there is not enough data in the stream buffer for a full packet, the
- *  function not populate the buffer and the return code will indicate no new
- *  packet.
+ *  Internally, this function enqueues the data to be written when convenient.
+ *  This function fails when there is not enough memory to enqueue the message
+ *  or when the queue is full.
  *
- *  Returned data DOES include the address as the first byte of the buffer.
- *
- *  @param s      The stream object from which to read
- *  @param buffer A pointer to the buffer to populate with the possible packet
- *  @return A status code indicating the status of the packet:
- *            0 - No new packet, buffer is returned empty.
- *            1 - New packet in buffer, packet is valid.
- *           -1 - New packet in buffer, packet failed parity check.
- *
- *  @bug Function does not currently out-of-order start/end bytes well. 
+ *  @param client_id  The ID of the client to write to
+ *  @param data       The data to write to the given client
+ *  @return A status code indicating success or failure
  */
 int DSerialMaster::sendData(uint8_t client_id, char *data){
+  if(_num_out_messages >= MAX_QUEUE_SIZE){
+    return 0;
+  }
   char *new_message = (char*) malloc(MAX_MSG_LEN+2);
   if(new_message == NULL){
     return 0;
@@ -133,6 +130,11 @@ int DSerialMaster::sendData(uint8_t client_id, char *data){
   return 1;
 }
 
+/** @brief Retrieve data if there is any to get
+ *
+ *  @param buffer A string to populate with the possible data
+ *  @return A status code indicating whether data was retrieved
+ */
 int DSerialMaster::getData(char *buffer){
   if(_num_in_messages == 0){
     return 0;
@@ -143,6 +145,15 @@ int DSerialMaster::getData(char *buffer){
   return 1;
 }
 
+/** @brief runs a client search and returns the results
+ *
+ *  A client search consists of pinging each client address between 1 and 
+ *  MAX_CLIENTS. If the client responds, then it gets put in our array.
+ *
+ *  @param clients  a pointer to memory of at least MAX_CLIENTS size to put
+                      the the found clients into. 
+ *  @return The number of clients found
+ */
 int DSerialMaster::getClients(uint8_t *clients){
   unsigned long start_millis;
   char temp[MAX_MSG_LEN];
@@ -269,7 +280,12 @@ int DSerialMaster::doSerial(){
   return 1;
 }
 
+/** @brief Creates a new DSerialClient object
+ * 
+ *  @param port The underlying stream object used for communication.
 
+ *  @return A new initialized DSerialClient object
+ */
 DSerialClient::DSerialClient(Stream &port, uint8_t client_number){
   _stream = port;
   _state = 0;
@@ -280,6 +296,15 @@ DSerialClient::DSerialClient(Stream &port, uint8_t client_number){
   memset(_out_messages, 0, MAX_CLIENTS);
 }
 
+/** @brief sends a data string to the master.
+ *
+ *  Internally, this function enqueues the data to be written when convenient.
+ *  This function fails when there is not enough memory to enqueue the message
+ *  or when the queue is full.
+ *
+ *  @param data The data to write to the given client
+ *  @return A status code indicating success or failure
+ */
 int DSerialClient::sendData(char *data){
   if(_num_out_messages >= MAX_QUEUE_SIZE){
     return 0;
@@ -294,6 +319,11 @@ int DSerialClient::sendData(char *data){
   return 1;
 }
 
+/** @brief Retrieve data if there is any to get
+ *
+ *  @param buffer A string to populate with the possible data
+ *  @return A status code indicating whether data was retrieved
+ */
 int DSerialMaster::getData(char *buffer){
   if(_num_in_messages == 0){
     return 0;
@@ -338,6 +368,9 @@ int DSerialClient::doSerial(){
         _state = CLIENT_SENT;
       } else if(buffer[1] == WRITE) {
         _in_messages[_num_in_messages++] = buffer;
+        short_msg[1] = (char)ACK;
+        strcpy(current_msg, short_msg);
+      } else if(buffer[1] == PING) {
         short_msg[1] = (char)ACK;
         strcpy(current_msg, short_msg);
       }

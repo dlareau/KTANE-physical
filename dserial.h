@@ -41,8 +41,24 @@
  *    - Check read/write packet return codes everywhere...
  *    - Have the client address be broken out into the packet datatype.
  *
+ *  Current transaction structure:
+ *    Client -> Master:
+ *      1 M: {READ}
+ *      2 C: {DATA}
+ *      3 M: {ACK}
+ *      4 C: {ACK}
+ *    
+ *    Client -> Master (If no data):
+ *      1 M: {READ}
+ *      2 C: {ACK}
+ *    
+ *    Master -> Client:
+ *      1 M: {WRITE}{DATA}
+ *      2 C: {ACK}
+ *
  *  @author Dillon Lareau (dlareau)
  */
+
 #pragma once
 #include "Arduino.h"
 
@@ -108,42 +124,3 @@ class DSerialClient {
     int       _num_out_messages;
     uint8_t   _client_number;
 };
-
-/*
-Master FSM:
-WAITING:
-  Anything => {Null, WAITING}
-SENT_READ:
-  ACK => {Null, WAITING}
-  DATA => {ACK, ACK_WAITING}
-  TIMEOUT => {READ, SENT_READ}
-  BAD => {NAK, SENT_READ}
-ACK_WAITING:
-  ACK => {Null, WAITING}
-  TIMEOUT => {ACK, ACK_WAITING}
-  BAD => {NAK, ACK_WAITING}
-
-Client FSM:
-ALL TIMES:
-  BAD => {Null, CURR_STATE}
-  NAK => {Last Packet, CURR_STATE}
-WAITING:
-  READ => {DATA, SENT_DATA}
-  WRITE/DATA => {ACK, WAITING}
-SENT_DATA:
-  ACK => {ACK, WAITING}
-
-Client -> Master:
-  1 M: {READ}
-  2 C: {DATA}
-  3 M: {ACK}
-  4 C: {ACK}
-
-Client -> Master (If no data):
-  1 M: {READ}
-  2 C: {ACK}
-
-Master -> Client:
-  1 M: {WRITE}{DATA}
-  2 C: {ACK}
-*/
