@@ -1,5 +1,5 @@
-/** @file kserial_new.cpp
- *  @brief The KSerial library implementation
+/** @file dserial.cpp
+ *  @brief The DSerial library implementation
  *
  *  Future improvements:
  *    - Switch queues to FIFO rather than LIFO
@@ -11,7 +11,7 @@
  */
 
 #include "Arduino.h"
-#include "kserial.h"
+#include "dserial.h"
 #include <string.h>
 
 /** @brief Reads a packet from the specified stream if one is available
@@ -72,20 +72,11 @@ int readPacket(Stream &s, char *buffer){
 
 /** @brief Writes a packet to the specified stream.
  *
- *  
- *  
- *  
- *  
- *  
- *
- *  @param s      The stream object from which to read
- *  @param buffer A pointer to the buffer to populate with the possible packet
- *  @return A status code indicating the status of the packet:
- *            0 - No new packet, buffer is returned empty.
- *            1 - New packet in buffer, packet is valid.
- *           -1 - New packet in buffer, packet failed parity check.
- *
- *  @bug Function does not currently out-of-order start/end bytes well. 
+ *  @param s        The stream object from which to read
+ *  @param message  A pointer to the message to send, first byte should be
+                      a client address
+ *  @return A status code indicating the whether or not the message was sent
+ *            - Currently this function will always succeed
  */
 // Message does need to be null terminated, the null terminator will not be sent.
 int sendPacket(Stream &s, char *message){
@@ -101,7 +92,7 @@ int sendPacket(Stream &s, char *message){
 }
 
 
-KSerialMaser::KSerialMaster(Stream &port){
+DSerialMaster::DSerialMaster(Stream &port){
   _stream = port;
   _state = 0;
   _num_clients = 0;
@@ -112,7 +103,7 @@ KSerialMaser::KSerialMaster(Stream &port){
   memset(_out_messages, 0, MAX_CLIENTS);
 }
 
-int KSerialMaster::sendData(uint8_t client_id, char *data){
+int DSerialMaster::sendData(uint8_t client_id, char *data){
   char *new_message = (char*) malloc(MAX_MSG_LEN+2);
   if(new_message == NULL){
     return 0;
@@ -124,7 +115,7 @@ int KSerialMaster::sendData(uint8_t client_id, char *data){
   return 1;
 }
 
-int KSerialMaster::getData(char *buffer){
+int DSerialMaster::getData(char *buffer){
   if(_num_in_messages == 0){
     return 0;
   }
@@ -134,7 +125,7 @@ int KSerialMaster::getData(char *buffer){
   return 1;
 }
 
-int KSerialMaster::getClients(uint8_t *clients){
+int DSerialMaster::getClients(uint8_t *clients){
   unsigned long start_millis;
   char temp[MAX_MSG_LEN];
   char message[3] = {(char)1, (char)PING, '\0'};
@@ -160,101 +151,87 @@ int KSerialMaster::getClients(uint8_t *clients){
   return _num_clients;
 }
 
-int KSerialMaster::doSerial(){
+int DSerialMaster::doSerial(){
   static unsigned long last_millis;
   static uint8_t num_attempts;
   static uint8_t client_index = 0;
-  static char    last_msg[MAX_MSG_LEN+1];
+  static char    current_msg[MAX_MSG_LEN+1];
   char short_msg[3] = {(char)_clients[client_index], '\0', '\0'};
-  int result;
+
+  // Read stream for input
+  char *buffer = (char*) malloc(MAX_MSG_LEN+1);
+  if(buffer == NULL){ // Fail if buffer allocation failed
+    return 0;
+  }
+  int result = readPacket(_stream, buffer);
+  if(result != 1){ // Free buffer if we didn't get a useful packet
+    free(buffer);
+  }
+  if(result == -1) {            // Bad data, send NAK.
+    short_msg[0] = last_msg[0];
+    short_msg[1] = (char)NAK;
+    sendPacket(_stream, short_msg);
+    strcpy(current_msg, short_msg);
+    continue;
+  }
 
   switch(_state){
+    // WAITING state: ignore incoming, send waiting, otherwise poll.
     case MASTER_WAITING:
       if(_num_out_messages > 0){
-        sendPacket(_stream, _out_messages[_num_out_messages-1]);
-        strcpy(last_msg, _out_messages[_num_out_messages-1]);
+        strcpy(current_msg, _out_messages[_num_out_messages-1]);
         free(_out_messages[--_num_out_messages])
-        num_attempts = 0;
         _state = MASTER_ACK;
-        last_millis = millis();
       } else {
         client_index = (client_index + 1) % _num_clients;
         short_msg[0] = (char)_clients[client_index];
         short_msg[1] = (char)READ;
-        sendPacket(_stream, short_msg);
-        strcpy(last_msg, short_msg);
-        num_attempts = 0;
+        strcpy(current_msg, short_msg);
         _state = MASTER_SENT;
-        last_millis = millis();
       }
+      sendPacket(_stream, current_msg);
+      num_attempts = 0;
+      last_millis = millis();
 
       break;
 
-    case MASTER_SENT: // Assumed mid-read
-      char *buffer = (char*) malloc(MAX_MSG_LEN+1);
-      if(buffer == NULL){ // Fail if buffer allocation failed
-        return 0;
-      }
+    // SENT state: assumed mid-read, deal with timeout/valid read.
+    case MASTER_SENT:
 
-      result = readPacket(_stream, buffer);
-
-      if(result != 1){ // Free buffer if we didn't get a useful packet
-        free(buffer);
-      }
-
-      // Deal with packet
-      if(result == -1) {            // Bad data, send NAK.
-        short_msg[1] = (char)NAK;
-        sendPacket(_stream, short_msg);
-        strcpy(last_msg, short_msg);
-      } else if(result == 0){       // Timed out, send READ again
-        if(millis() - last_millis > TIMEOUT) {
+      if(result == 0){
+        if(millis() - last_millis > TIMEOUT) { // Timed out, send READ again
           if(num_attempts >= MAX_RETRIES){
             _state = MASTER_WAITING;
             return 0;
           }
-          sendPacket(_stream, last_msg);
+          sendPacket(_stream, current_msg);
           num_attempts++;
         }
-      } else if(result == 1) {      // Useful packet
-        if(buffer[1] == ACK){
+      } else if(result == 1) { // Useful packet
+        if(buffer[1] == ACK){ // Client ACK'd read request indicating no data
           free(buffer);
           _state = MASTER_WAITING;
         } else {
           _in_messages[_num_in_messages++] = buffer;
           short_msg[1] = (char)ACK;
           sendPacket(_stream, short_msg);
-          strcpy(last_msg, short_msg);
+          strcpy(current_msg, short_msg);
           _state = MASTER_ACK;
         }
       }
 
       break;
 
+    // ACK state: waiting for client ACK, dealing with timeouts and non-ACKs
     case MASTER_ACK:
-      char *buffer = (char*) malloc(MAX_MSG_LEN+1);
-      if(buffer == NULL){ // Fail if buffer allocation failed
-        return 0;
-      }
-
-      result = readPacket(_stream, buffer);
-
-      if(result != 1){ // Free buffer if we didn't get a useful packet
-        free(buffer);
-      }
-
       // Deal with packet
-      if(result == -1) {            // Bad data, send NAK.
-        short_msg[1] = (char)NAK;
-        sendPacket(_stream, short_msg);
-        strcpy(last_msg, short_msg);
-      } else if(result == 0){       // Timed out, send READ again
+      if(result == 0){       // Timed out, send READ again
         if(millis() - last_millis > TIMEOUT) {
           if(num_attempts >= MAX_RETRIES){
             _state = MASTER_WAITING;
             return 0;
           }
-          sendPacket(_stream, last_msg);
+          sendPacket(_stream, current_msg);
           num_attempts++;
         }
       } else if(result == 1) {      // Useful packet
@@ -262,18 +239,20 @@ int KSerialMaster::doSerial(){
           free(buffer);
           _state = _WAITING;
         } else {
+          free(buffer);
           short_msg[1] = (char)NAK;
           sendPacket(_stream, short_msg);
-          strcpy(last_msg, short_msg);
+          strcpy(current_msg, short_msg);
         }
       }
 
       break;
   }
+  return 1;
 }
 
 
-KSerialClient::KSerialClient(Stream &port, uint8_t client_number){
+DSerialClient::DSerialClient(Stream &port, uint8_t client_number){
   _stream = port;
   _state = 0;
   _client_number = client_number;
@@ -283,7 +262,7 @@ KSerialClient::KSerialClient(Stream &port, uint8_t client_number){
   memset(_out_messages, 0, MAX_CLIENTS);
 }
 
-int KSerialClient::sendData(char *data){
+int DSerialClient::sendData(char *data){
   if(_num_out_messages >= MAX_QUEUE_SIZE){
     return 0;
   }
@@ -297,7 +276,7 @@ int KSerialClient::sendData(char *data){
   return 1;
 }
 
-int KSerialMaster::getData(char *buffer){
+int DSerialMaster::getData(char *buffer){
   if(_num_in_messages == 0){
     return 0;
   }
@@ -307,107 +286,56 @@ int KSerialMaster::getData(char *buffer){
   return 1;
 }
 
-int KSerialClient::doSerial(){
+int DSerialClient::doSerial(){
   static unsigned long last_millis;
-  static uint8_t num_attempts;
-  static char    last_msg[MAX_MSG_LEN+1];
-  char short_msg[3] = {(char)1, '\0', '\0'};
-  int result;
+  static char    current_msg[MAX_MSG_LEN+1];
+  char short_msg[3] = {(char)MASTER_ID, '\0', '\0'};
+
+  // Read stream for input
+  char *buffer = (char*) malloc(MAX_MSG_LEN+1);
+  if(buffer == NULL){ // Fail if buffer allocation failed
+    return 0;
+  }
+  int result = readPacket(_stream, buffer);
+  if(result != 1){ // Free buffer if we didn't get a useful packet
+    free(buffer);
+    return 1;
+  }
+  if(buffer[0] != _client_number){
+    free(buffer);
+    return 1
+  }
+  if(buffer[1] == NAK){
+    free(buffer);
+    sendPacket(_stream, current_msg);
+    return 1;
+  }
 
   switch(_state){
-    // !!! In this one and in other do_serial, (needs camelcase), pull readPacket out to top.
-
-    case MASTER_WAITING:
-      if(/* check for master */) {
-        // Respond to master
+    // WAITING state: respond to any requests
+    case CLIENT_WAITING:
+      if(buffer[1] == READ and _num_out_messages > 0){
+        strcpy(current_msg, _out_messages[_num_out_messages-1]);
+        free(_out_messages[--_num_out_messages])
+        _state = CLIENT_SENT;
+      } else if(buffer[1] == WRITE) {
+        _in_messages[_num_in_messages++] = buffer;
+        short_msg[1] = (char)ACK;
+        strcpy(current_msg, short_msg);
       }
-      // Code for sending requested data
-      sendPacket(_stream, _out_messages[_num_out_messages-1]);
-      strcpy(last_msg, _out_messages[_num_out_messages-1]);
-      free(_out_messages[--_num_out_messages])
-      num_attempts = 0;
-      _state = CLIENT_WAITING;
-      last_millis = millis();
+      sendPacket(_stream, current_msg);
 
       break;
 
-    case MASTER_SENT: // Assumed mid-read
-      char *buffer = (char*) malloc(MAX_MSG_LEN+1);
-      if(buffer == NULL){ // Fail if buffer allocation failed
-        return 0;
+    // SENT state: look for and respond to ACK.
+    case CLIENT_SENT:
+      if(buffer[1] == ACK){ // Client ACK'd read request indicating no data
+        _state = CLIENT_WAITING;
+        short_msg[1] = (char)ACK;
+        strcpy(current_msg, short_msg);
+        sendPacket(_stream, current_msg);
       }
-
-      result = readPacket(_stream, buffer);
-
-      if(result != 1){ // Free buffer if we didn't get a useful packet
-        free(buffer);
-      }
-
-      // Deal with packet
-      if(result == -1) {            // Bad data, send NAK.
-        short_msg[1] = (char)NAK;
-        sendPacket(_stream, short_msg);
-        strcpy(last_msg, short_msg);
-      } else if(result == 0){       // Timed out, send READ again
-        if(millis() - last_millis > TIMEOUT) {
-          if(num_attempts >= MAX_RETRIES){
-            _state = MASTER_WAITING;
-            return 0;
-          }
-          sendPacket(_stream, last_msg);
-          num_attempts++;
-        }
-      } else if(result == 1) {      // Useful packet
-        if(buffer[1] == ACK){
-          free(buffer);
-          _state = MASTER_WAITING;
-        } else {
-          _in_messages[_num_in_messages++] = buffer;
-          short_msg[1] = (char)ACK;
-          sendPacket(_stream, short_msg);
-          strcpy(last_msg, short_msg);
-          _state = MASTER_ACK;
-        }
-      }
-
-      break;
-
-    case MASTER_ACK:
-      char *buffer = (char*) malloc(MAX_MSG_LEN+1);
-      if(buffer == NULL){ // Fail if buffer allocation failed
-        return 0;
-      }
-
-      result = readPacket(_stream, buffer);
-
-      if(result != 1){ // Free buffer if we didn't get a useful packet
-        free(buffer);
-      }
-
-      // Deal with packet
-      if(result == -1) {            // Bad data, send NAK.
-        short_msg[1] = (char)NAK;
-        sendPacket(_stream, short_msg);
-        strcpy(last_msg, short_msg);
-      } else if(result == 0){       // Timed out, send READ again
-        if(millis() - last_millis > TIMEOUT) {
-          if(num_attempts >= MAX_RETRIES){
-            _state = MASTER_WAITING;
-            return 0;
-          }
-          sendPacket(_stream, last_msg);
-          num_attempts++;
-        }
-      } else if(result == 1) {      // Useful packet
-        if(buffer[1] == ACK){
-          free(buffer);
-          _state = _WAITING;
-        } else {
-          short_msg[1] = (char)NAK;
-          sendPacket(_stream, short_msg);
-          strcpy(last_msg, short_msg);
-        }
-      }
+      free(buffer);
 
       break;
   }

@@ -1,14 +1,14 @@
-/** @file kserial_new.h
- *  @brief Headers and definitions for the KSerial Library
+/** @file dserial.h
+ *  @brief Headers and definitions for the DSerial Library
  *
- *  The KSerial library adds a layer-3/4 interface intended to be used on top
- *  of a serial UART multi-drop bus. KSerial adds addressing and message 
+ *  The DSerial library adds a layer-3/4 interface intended to be used on top
+ *  of a serial UART multi-drop bus. DSerial adds addressing and message 
  *  acknowledgment in a master/client configuration. Clients are polled for
  *  data. 
  *
  *  The library is divided into Master and Client classes. In order for constant
  *  data flow, all communicating parties should call "doSerial" often. Functions
- *  in the KSerial library do not block and all but getClients should be
+ *  in the DSerial library do not block and all but getClients should be
  *  execute relatively quickly.
  *
  *  Currently, only bytes with values between 1 and 127 inclusive are allowed 
@@ -19,30 +19,31 @@
  *  Definitions:
  *    - Packet: Data in the form of {START}{MESSAGE}{PARITY}{END}
  *      - Currently, the first byte of the message is the client address
- *    - Valid 
- *
- *
- *
+ *    - Valid addresses for clients are between 1 and MAX_CLIENTS
+ *      - MAX_CLIENTS can be at most 126.
  *
  *  @author Dillon Lareau (dlareau)
  */
 #pragma once
 #include "Arduino.h"
 
+// Control characters
+// All of the form 0x80 + (most appropriate ascii character)
 #define ACK 0x86
 #define NAK 0x95
 #define START 0x82
 #define END 0x83
-#define WRITE 0x57
-#define READ 0x52
+#define WRITE 0xD7
+#define READ 0xD2
 #define NO_DATA 0xB0
 #define PING 0xB1
 
 #define TIMEOUT 50
 #define MAX_CLIENTS 16
-#define MAX_MSG_LEN 8
+#define MAX_MSG_LEN 10
 #define MAX_QUEUE_SIZE 18
 #define NUM_RETRIES 3
+#define MASTER_ID 127
 
 #define MASTER_WAITING 0
 #define MASTER_SENT 1
@@ -53,9 +54,9 @@
 int readPacket(Stream &s, char *buffer);
 int sendPacket(Stream &s, char *message);
 
-class KSerialMaster {
+class DSerialMaster {
   public:
-    KSerialMaster(Stream &port);
+    DSerialMaster(Stream &port);
     int sendData(uint8_t client_id, char *data);
     int getData(char *buffer);
     int doSerial();
@@ -72,9 +73,9 @@ class KSerialMaster {
     uint8_t   _clients[MAX_CLIENTS];
 };
 
-class KSerialClient {
+class DSerialClient {
   public:
-    KSerialClient(Stream &port, uint8_t client_number);
+    DSerialClient(Stream &port, uint8_t client_number);
     int sendData(char *data);
     int getData(char *buffer);
     int doSerial();
@@ -90,18 +91,6 @@ class KSerialClient {
 };
 
 /*
-Addresses:    127: Master
-            1-126: Clients
-Bytes greater than 127 are control packets.
-
-Packet: {START}{ADDRESS}{MESSAGE}{PARITY}{END}
-
-Decode Method:
-  Read starting at a start bit, ending at an end bit.
-  A start bit after a start bit before an end bit restarts the message.
-  An end bit after an end bit before a start bit is ignored.
-  Once you have received a full packet, check parity, 
-
 When master sees corrupted packet, if data, send NAK.
 When client sees corrupted packet, it just ignores it.
 
