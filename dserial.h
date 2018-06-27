@@ -22,6 +22,25 @@
  *    - Valid addresses for clients are between 1 and MAX_CLIENTS
  *      - MAX_CLIENTS can be at most 126.
  *
+ *  The overall interaction method with this library should be through the 
+ *  sendData and getData methods on the master and client objects. Unlike the
+ *  notion of a message used internally, these strings do not contain the id
+ *  of the intended recipient.
+ *
+ *  (Internally however, a "message" always contains the destination client id
+ *   as the first byte)
+ *
+ *  At because it is impossible to know which client a corrupted packet was
+ *  intended for, clients to not NAK corrupt packets, instead the transaction
+ *  will just time out and the master node will retry the transaction. This 
+ *  takes longer, but because the whole library is non-blocking it's fine.
+ *
+ *  Future improvements:
+ *    - Switch queues to FIFO rather than LIFO
+ *    - Switch to all length based binary processing to allow nulls
+ *    - Check read/write packet return codes everywhere...
+ *    - Have the client address be broken out into the packet datatype.
+ *
  *  @author Dillon Lareau (dlareau)
  */
 #pragma once
@@ -91,9 +110,6 @@ class DSerialClient {
 };
 
 /*
-When master sees corrupted packet, if data, send NAK.
-When client sees corrupted packet, it just ignores it.
-
 Master FSM:
 WAITING:
   Anything => {Null, WAITING}

@@ -1,12 +1,6 @@
 /** @file dserial.cpp
  *  @brief The DSerial library implementation
  *
- *  Future improvements:
- *    - Switch queues to FIFO rather than LIFO
- *    - Switch to all length based binary processing to allow nulls
- *    - Check read/write packet return codes everywhere...
- *    - Have the address be broken out into the packet datatype.
- *
  *  @author Dillon Lareau (dlareau)
  */
 
@@ -71,14 +65,14 @@ int readPacket(Stream &s, char *buffer){
 }
 
 /** @brief Writes a packet to the specified stream.
- *
+ * 
  *  @param s        The stream object from which to read
  *  @param message  A pointer to the message to send, first byte should be
-                      a client address
+                      a client address, message should be null terminated,
+                      however the null byte will not be sent over the wire.
  *  @return A status code indicating the whether or not the message was sent
  *            - Currently this function will always succeed
  */
-// Message does need to be null terminated, the null terminator will not be sent.
 int sendPacket(Stream &s, char *message){
   char data_parity = 0;
   for (int i = 0; i < strlen(message); i++) {
@@ -91,7 +85,12 @@ int sendPacket(Stream &s, char *message){
   return 1;
 }
 
+/** @brief Creates a new DSerialMaster object
+ * 
+ *  @param port The underlying stream object used for communication.
 
+ *  @return A new initialized DSerialMaster object
+ */
 DSerialMaster::DSerialMaster(Stream &port){
   _stream = port;
   _state = 0;
@@ -103,6 +102,25 @@ DSerialMaster::DSerialMaster(Stream &port){
   memset(_out_messages, 0, MAX_CLIENTS);
 }
 
+/** @brief sends a data string to the specified client.
+ *
+ *  If the data in the stream contains a full packet, the packet will be put
+ *  into the return buffer and the return code will indicate it's validity.
+ *  If there is not enough data in the stream buffer for a full packet, the
+ *  function not populate the buffer and the return code will indicate no new
+ *  packet.
+ *
+ *  Returned data DOES include the address as the first byte of the buffer.
+ *
+ *  @param s      The stream object from which to read
+ *  @param buffer A pointer to the buffer to populate with the possible packet
+ *  @return A status code indicating the status of the packet:
+ *            0 - No new packet, buffer is returned empty.
+ *            1 - New packet in buffer, packet is valid.
+ *           -1 - New packet in buffer, packet failed parity check.
+ *
+ *  @bug Function does not currently out-of-order start/end bytes well. 
+ */
 int DSerialMaster::sendData(uint8_t client_id, char *data){
   char *new_message = (char*) malloc(MAX_MSG_LEN+2);
   if(new_message == NULL){
