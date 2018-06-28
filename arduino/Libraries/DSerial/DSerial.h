@@ -91,14 +91,14 @@ int sendPacket(Stream *s, char *message);
 
 class DSerialMaster {
   public:
-    DSerialMaster(Stream *port);
+    DSerialMaster(Stream &port);
     int sendData(uint8_t client_id, char *data);
     int getData(char *buffer);
     int doSerial();
     int getClients(uint8_t *clients);
 
   private:
-    Stream    *_stream;
+    Stream   &_stream;
     uint8_t   _state;
     char     *_in_messages[MAX_QUEUE_SIZE];
     int       _num_in_messages;
@@ -110,13 +110,13 @@ class DSerialMaster {
 
 class DSerialClient {
   public:
-    DSerialClient(Stream *port, uint8_t client_number);
+    DSerialClient(Stream &port, uint8_t client_number);
     int sendData(char *data);
     int getData(char *buffer);
     int doSerial();
 
   private:
-    Stream    *_stream;
+    Stream   &_stream;
     uint8_t   _state;
     char     *_in_messages[MAX_QUEUE_SIZE];
     int       _num_in_messages;
