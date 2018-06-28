@@ -1,3 +1,4 @@
+#include "DSerial.h"
 #include "dserial.h"
 #include <NeoICSerial.h>
 NeoICSerial serial_port;
