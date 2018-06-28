@@ -30,15 +30,15 @@
  *
  *  @bug Function does not currently out-of-order start/end bytes well. 
  */
-int readPacket(Stream &s, char *buffer){
+int readPacket(Stream *s, char *buffer){
   static int in_packet = 0;
   static int index = 0;
   static char buf[MAX_MSG_LEN+1];
   static char data_parity = 0;
   char rc;
 
-  while (s.available() > 0) {
-    rc = s.read();
+  while (s->available() > 0) {
+    rc = s->read();
 
     if (in_packet == 1) {
       data_parity ^= rc;
@@ -76,15 +76,15 @@ int readPacket(Stream &s, char *buffer){
  *  @return A status code indicating the whether or not the message was sent
  *            - Currently this function will always succeed
  */
-int sendPacket(Stream &s, char *message){
+int sendPacket(Stream *s, char *message){
   char data_parity = 0;
   for (int i = 0; message[i] != 0; i++) {
     data_parity = data_parity ^ (uint8_t)message[i];
   }
-  s.print(START);
-  s.print(message);
-  s.print((START ^ data_parity ^ END));
-  s.print(END);
+  s->print(START);
+  s->print(message);
+  s->print((START ^ data_parity ^ END));
+  s->print(END);
   return 1;
 }
 
@@ -94,7 +94,7 @@ int sendPacket(Stream &s, char *message){
 
  *  @return A new initialized DSerialMaster object
  */
-DSerialMaster::DSerialMaster(Stream &port){
+DSerialMaster::DSerialMaster(Stream *port){
   _stream = port;
   _state = 0;
   _num_clients = 0;
@@ -286,7 +286,7 @@ int DSerialMaster::doSerial(){
 
  *  @return A new initialized DSerialClient object
  */
-DSerialClient::DSerialClient(Stream &port, uint8_t client_number){
+DSerialClient::DSerialClient(Stream *port, uint8_t client_number){
   _stream = port;
   _state = 0;
   _client_number = client_number;
@@ -389,4 +389,5 @@ int DSerialClient::doSerial(){
 
       break;
   }
+  return 1;
 }
