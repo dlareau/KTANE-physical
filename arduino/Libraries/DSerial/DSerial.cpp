@@ -43,11 +43,11 @@ int readPacket(Stream &s, char *buffer){
 
     if (in_packet == 1) {
       data_parity ^= rc;
-      if (rc != (char)END) {
+      if (rc != END) {
         buf[index] = rc;
         index++;
       }
-      if(rc == (char)END || index >= MAX_MSG_LEN){
+      if(rc == END || index >= MAX_MSG_LEN){
         index--;
         buf[index] = '\0'; //purposefully overwrite parity byte.
         strcpy(buffer, buf);
@@ -61,7 +61,7 @@ int readPacket(Stream &s, char *buffer){
         }
       }
     }
-    if (rc == (char)START) {
+    if (rc == START) {
       in_packet = 1;
       data_parity = START;
     }
@@ -126,7 +126,7 @@ int DSerialMaster::sendData(uint8_t client_id, char *data){
   }
   strcpy(new_message+2, data);
   new_message[0] = (char)client_id;
-  new_message[1] = (char)WRITE;
+  new_message[1] = WRITE;
   _out_messages[_num_out_messages++] = new_message;
   return 1;
 }
@@ -158,7 +158,7 @@ int DSerialMaster::getData(char *buffer){
 int identifyClients() {
   unsigned long start_millis;
   char temp[MAX_MSG_LEN];
-  char message[3] = {(char)1, (char)PING, '\0'};
+  char message[3] = {(char)1, PING, '\0'};
   _num_clients = 0;
   memset(_clients, 0, MAX_CLIENTS);
 
@@ -210,7 +210,7 @@ int DSerialMaster::doSerial(){
   }
   if(result == -1) {            // Bad data, send NAK.
     short_msg[0] = current_msg[0];
-    short_msg[1] = (char)NAK;
+    short_msg[1] = NAK;
     sendPacket(_stream, short_msg);
     strcpy(current_msg, short_msg);
     return 1;
@@ -225,7 +225,7 @@ int DSerialMaster::doSerial(){
       } else {
         client_index = (client_index + 1) % _num_clients;
         short_msg[0] = (char)_clients[client_index];
-        short_msg[1] = (char)READ;
+        short_msg[1] = READ;
         strcpy(current_msg, short_msg);
         _state = MASTER_SENT;
       }
@@ -247,12 +247,12 @@ int DSerialMaster::doSerial(){
           num_attempts++;
         }
       } else if(result == 1) { // Useful packet
-        if(buffer[1] == (char)ACK){ // Client ACK'd read request indicating no data
+        if(buffer[1] == ACK){ // Client ACK'd read request indicating no data
           free(buffer);
           _state = MASTER_WAITING;
         } else {
           _in_messages[_num_in_messages++] = buffer;
-          short_msg[1] = (char)ACK;
+          short_msg[1] = ACK;
           sendPacket(_stream, short_msg);
           strcpy(current_msg, short_msg);
           _state = MASTER_ACK;
@@ -274,12 +274,12 @@ int DSerialMaster::doSerial(){
           num_attempts++;
         }
       } else if(result == 1) {      // Useful packet
-        if(buffer[1] == (char)ACK){
+        if(buffer[1] == ACK){
           free(buffer);
           _state = MASTER_WAITING;
         } else {
           free(buffer);
-          short_msg[1] = (char)NAK;
+          short_msg[1] = NAK;
           sendPacket(_stream, short_msg);
           strcpy(current_msg, short_msg);
         }
@@ -361,7 +361,7 @@ int DSerialClient::doSerial(){
     free(buffer);
     return 1;
   }
-  if(buffer[1] == (char)NAK){
+  if(buffer[1] == NAK){
     free(buffer);
     sendPacket(_stream, current_msg);
     return 1;
@@ -369,22 +369,22 @@ int DSerialClient::doSerial(){
   switch(_state){
     // WAITING state: respond to any requests
     case CLIENT_WAITING:
-      if(buffer[1] == (char)READ){
+      if(buffer[1] == READ){
         if(_num_out_messages > 0){
           strcpy(current_msg, _out_messages[_num_out_messages-1]);
           free(_out_messages[--_num_out_messages]);
           _state = CLIENT_SENT;
         } else {
-          short_msg[1] = (char)ACK;
+          short_msg[1] = ACK;
           strcpy(current_msg, short_msg);
         }
         free(buffer);
-      } else if(buffer[1] == (char)WRITE) {
+      } else if(buffer[1] == WRITE) {
         _in_messages[_num_in_messages++] = buffer;
-        short_msg[1] = (char)ACK;
+        short_msg[1] = ACK;
         strcpy(current_msg, short_msg);
-      } else if(buffer[1] == (char)PING) {
-        short_msg[1] = (char)ACK;
+      } else if(buffer[1] == PING) {
+        short_msg[1] = ACK;
         strcpy(current_msg, short_msg);
         free(buffer);
       }
@@ -394,9 +394,9 @@ int DSerialClient::doSerial(){
 
     // SENT state: look for and respond to ACK.
     case CLIENT_SENT:
-      if(buffer[1] == (char)ACK){ // Client ACK'd read request indicating no data
+      if(buffer[1] == ACK){ // Client ACK'd read request indicating no data
         _state = CLIENT_WAITING;
-        short_msg[1] = (char)ACK;
+        short_msg[1] = ACK;
         strcpy(current_msg, short_msg);
         sendPacket(_stream, current_msg);
       }

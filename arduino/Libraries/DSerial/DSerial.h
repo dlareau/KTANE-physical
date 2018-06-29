@@ -63,14 +63,14 @@
 
 // Control characters
 // All of the form 0x80 + (most appropriate ascii character)
-#define ACK 0x86
-#define NAK 0x95
-#define START 0x82
-#define END 0x83
-#define WRITE 0xD7
-#define READ 0xD2
-#define NO_DATA 0xB0
-#define PING 0xB1
+#define ACK (char)0x86
+#define NAK (char)0x95
+#define START (char)0x82
+#define END (char)0x83
+#define WRITE (char)0xD7
+#define READ (char)0xD2
+#define NO_DATA (char)0xB0
+#define PING (char)0xB1
 
 #define TIMEOUT 50
 #define MAX_CLIENTS 16

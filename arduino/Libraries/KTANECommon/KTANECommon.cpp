@@ -34,19 +34,19 @@ KTANEModule::KTANEModule(DSerialClient &dserial):_dserial(dserial) {
 void KTANEModule::ModuleInterpretData(){
   char out_message[MAX_MSG_LEN];
   if(_dserial.getData(out_message)) {
-    if(out_message[0] == (char)CONFIG && strlen(out_message) == 8) {
+    if(out_message[0] == CONFIG && strlen(out_message) == 8) {
       raw_to_config((raw_config_t)(out_message + 1), &_config);
     }
   }
 }
 
 int KTANEModule::sendStrike() {
-  char str[2] = {(char)STRIKE, '\0'};
+  char str[2] = {STRIKE, '\0'};
   return _dserial.sendData(str);
 }
 
 int KTANEModule::sendSolve() {
-  char str[2] = {(char)SOLVE, '\0'};
+  char str[2] = {SOLVE, '\0'};
   return _dserial.sendData(str);
 }
 
@@ -99,9 +99,9 @@ void KTANEModule::ControllerInterpretData() {
   char out_message[MAX_MSG_LEN];
   int client_id = _dserial.getData(out_message);
   if(client_id) {
-    if(out_message[0] == (char)STRIKE) {
+    if(out_message[0] == STRIKE) {
       _strikes[client_id] = 1;
-    } else if(out_message[0] == (char)SOLVE) {
+    } else if(out_message[0] == SOLVE) {
       _solves[client_id] = 1;
     }
   }
@@ -114,7 +114,7 @@ int KTANEModule::sendConfig(config_t *config) {
   int num_clients = 0;
   num_clients = _dserial.getClients(clients);
 
-  msg[0] = (char)CONFIG;
+  msg[0] = CONFIG;
   config_to_raw(config, msg+1);
   msg[8] = '\0';
 

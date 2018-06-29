@@ -16,9 +16,9 @@
 #define IS_LETTER(x) ((x) >= 'A' && (x) <= 'Z')
 
 // Data prefix codes:
-#define STRIKE 0xC0
-#define SOLVE 0xC1
-#define CONFIG 0xC2
+#define STRIKE (char)0xC0
+#define SOLVE (char)0xC1
+#define CONFIG (char)0xC2
 
 typedef struct raw_config_st {
   // Byte 0
