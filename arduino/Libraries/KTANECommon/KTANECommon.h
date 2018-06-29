@@ -48,7 +48,7 @@ void raw_to_config(raw_config_t *raw_config, config_t *config_t);
 class KTANEModule {
   public:
     KTANEModule(DSerialClient &dserial);
-    void ModuleInterpretData();
+    void interpretData();
     int sendStrike();
     int sendSolve();
     config_t *getConfig();
@@ -68,7 +68,7 @@ class KTANEModule {
 class KTANEController {
   public:
     KTANEController(DSerialMaster &dserial);
-    void ControllerInterpretData();
+    void interpretData();
     int sendConfig(config_t *config);
     int getStrikes();
     int getSolves();

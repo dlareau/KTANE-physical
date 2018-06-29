@@ -31,7 +31,7 @@ KTANEModule::KTANEModule(DSerialClient &dserial):_dserial(dserial) {
   memset(_config, 0, sizeof(config_t));
 }
 
-void KTANEModule::ModuleInterpretData(){
+void KTANEModule::interpretData(){
   char out_message[MAX_MSG_LEN];
   if(_dserial.getData(out_message)) {
     if(out_message[0] == CONFIG && strlen(out_message) == 8) {
@@ -95,7 +95,7 @@ KTANEController::KTANEController(DSerialMaster &dserial):_dserial(dserial) {
   memset(_solves, 0, MAX_CLIENTS);
 }
 
-void KTANEModule::ControllerInterpretData() {
+void KTANEModule::interpretData() {
   char out_message[MAX_MSG_LEN];
   int client_id = _dserial.getData(out_message);
   if(client_id) {
