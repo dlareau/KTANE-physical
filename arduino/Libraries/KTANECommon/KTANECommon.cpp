@@ -107,16 +107,23 @@ void KTANEModule::ControllerInterpretData() {
   }
 }
 
-// TODO finish this
 int KTANEModule::sendConfig(config_t *config) {
   char msg[9];
+  int err = 0;
+  uint8_t clients[MAX_CLIENTS];
+  int num_clients = 0;
+  num_clients = _dserial.getClients(clients);
+
   msg[0] = (char)CONFIG;
   config_to_raw(config, msg+1);
   msg[8] = '\0';
-  for(int i = 0; i < LEN_OF_CLIENT_ARRAY; i++) {
-    TEMP_RETURN_CODE = _dserial.sendData(CLIENT_ARRAY[i], msg);
+
+  for(int i = 0; i < num_clients; i++) {
+    if(!_dserial.sendData(clients[i], msg)) {
+      err++;
+    }
   }
-  return CHECK_RETURN_CODES
+  return (err == 0);
 }
 
 int KTANEModule::getStrikes() {
