@@ -29,12 +29,14 @@ void raw_to_config(raw_config_t *raw_config, config_t *config_t) {
 
 KTANEModule::KTANEModule(DSerialClient &dserial):_dserial(dserial) {
   memset(_config, 0, sizeof(config_t));
+  _got_config = 0;
 }
 
 void KTANEModule::interpretData(){
   char out_message[MAX_MSG_LEN];
   if(_dserial.getData(out_message)) {
     if(out_message[0] == CONFIG && strlen(out_message) == 8) {
+      _got_config = 1;
       raw_to_config((raw_config_t)(out_message + 1), &_config);
     }
   }
@@ -51,7 +53,11 @@ int KTANEModule::sendSolve() {
 }
 
 config_t *KTANEModule::getConfig() {
-  return &_config;
+  if(_got_config){
+    return &_config;
+  } else {
+    return NULL;
+  }
 }
 
 int KTANEModule::getLitFRK() {
@@ -95,8 +101,9 @@ KTANEController::KTANEController(DSerialMaster &dserial):_dserial(dserial) {
   memset(_solves, 0, MAX_CLIENTS);
 }
 
-void KTANEModule::interpretData() {
+void KTANEController::interpretData() {
   char out_message[MAX_MSG_LEN];
+  _dserial.doSerial();
   int client_id = _dserial.getData(out_message);
   if(client_id) {
     if(out_message[0] == STRIKE) {
@@ -107,7 +114,7 @@ void KTANEModule::interpretData() {
   }
 }
 
-int KTANEModule::sendConfig(config_t *config) {
+int KTANEController::sendConfig(config_t *config) {
   char msg[9];
   int err = 0;
   uint8_t clients[MAX_CLIENTS];
@@ -126,7 +133,7 @@ int KTANEModule::sendConfig(config_t *config) {
   return (err == 0);
 }
 
-int KTANEModule::getStrikes() {
+int KTANEController::getStrikes() {
   int num_strikes = 0;
   for(int i = 0; i < MAX_CLIENTS; i++) {
     num_strikes += _strikes[i];
@@ -134,7 +141,7 @@ int KTANEModule::getStrikes() {
   return num_strikes;
 }
 
-int KTANEModule::getSolves() {
+int KTANEController::getSolves() {
   int num_solves = 0;
   for(int i = 0; i < MAX_CLIENTS; i++) {
     num_solves += _solves[i];

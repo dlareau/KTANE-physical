@@ -1,6 +1,8 @@
 /** @file KTANECommon.h
  *  @brief Headers and definitions for common KTANE functionality
  *
+ *  TODO: Implement reset and sending out number of strikes
+ *
  *  @author Dillon Lareau (dlareau)
  */
 
@@ -60,6 +62,7 @@ class KTANEModule {
     int getRJ45Port();
     char getSerialDigit(int index);
     int serialContains(char c);
+    int is_solved;
   private:
     DSerialClient &_dserial;
     config_t _config;
