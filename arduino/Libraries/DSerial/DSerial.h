@@ -38,7 +38,6 @@
  *  Future improvements:
  *    - Switch queues to FIFO rather than LIFO
  *    - Switch to all length based binary processing to allow nulls
- *    - Check read/write packet return codes everywhere...
  *    - Have the client address be broken out into the packet datatype.
  *
  *  Current transaction structure:

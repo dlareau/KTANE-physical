@@ -5,6 +5,7 @@
  *
  *  @bug Return codes are checked less often than they should be...
  *  @bug Library does not currently deal with too many in_messages.
+ *  @bug Client does not handle unexpected messages that pass parity gracefully.
  */
 
 #include "Arduino.h"
