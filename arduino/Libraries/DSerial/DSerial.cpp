@@ -137,13 +137,15 @@ int DSerialMaster::sendData(uint8_t client_id, char *data){
  *  @return A status code indicating whether data was retrieved
  */
 int DSerialMaster::getData(char *buffer){
+  int client_id;
   if(_num_in_messages == 0){
     return 0;
   }
-  strcpy(buffer, _in_messages[_num_in_messages-1]+1);
-  free(_in_messages[_num_in_messages]);
   _num_in_messages--;
-  return 1;
+  client_id = _in_messages[_num_in_messages][0];
+  strcpy(buffer, _in_messages[_num_in_messages]+1);
+  free(_in_messages[_num_in_messages]);
+  return client_id;
 }
 
 /** @brief runs a client search and returns the results
@@ -314,7 +316,7 @@ int DSerialClient::sendData(char *data){
     return 0;
   }
   strcpy(new_message+1, data);
-  new_message[0] = (char)MASTER_ID;
+  new_message[0] = (char)_client_number;
   _out_messages[_num_out_messages++] = new_message;
   return 1;
 }
@@ -328,15 +330,15 @@ int DSerialClient::getData(char *buffer){
   if(_num_in_messages == 0){
     return 0;
   }
-  strcpy(buffer, _in_messages[_num_in_messages-1]+2);
-  free(_in_messages[_num_in_messages]);
   _num_in_messages--;
+  strcpy(buffer, _in_messages[_num_in_messages]+2);
+  free(_in_messages[_num_in_messages]);
   return 1;
 }
 
 int DSerialClient::doSerial(){
   static char    current_msg[MAX_MSG_LEN+1];
-  char short_msg[3] = {(char)MASTER_ID, '\0', '\0'};
+  char short_msg[3] = {(char)_client_number, '\0', '\0'};
 
   // Read stream for input
   char *buffer = (char*) malloc(MAX_MSG_LEN+1);

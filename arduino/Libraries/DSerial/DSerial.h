@@ -77,7 +77,6 @@
 #define MAX_MSG_LEN 10
 #define MAX_QUEUE_SIZE 18
 #define MAX_RETRIES 3
-#define MASTER_ID 127
 
 #define MASTER_WAITING 0
 #define MASTER_SENT 1

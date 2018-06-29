@@ -19,20 +19,17 @@
 #define STRIKE 0xC0
 #define SOLVE 0xC1
 #define CONFIG 0xC2
-#define CHAR_TO_INDEX(x) 
-
-char ALPHABET[32] = "ABCDEFGHJKLMNPQRSTUVWXZ23456789";
 
 typedef struct raw_config_st {
-  // Byte 1
+  // Byte 0
   unsigned int spacer1: 2;
   unsigned int ports : 3;
   unsigned int batteries: 3;
 
-  // Bytes 2-6
+  // Bytes 1-5
   char serial[5]
   
-  // Byte 7
+  // Byte 6
   unsigned int spacer2: 3;
   unsigned int serial6: 3;
   unsigned int indicators : 2;
