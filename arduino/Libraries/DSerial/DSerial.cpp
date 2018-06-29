@@ -134,7 +134,7 @@ int DSerialMaster::sendData(uint8_t client_id, char *data){
 /** @brief Retrieve data if there is any to get
  *
  *  @param buffer A string to populate with the possible data
- *  @return A status code indicating whether data was retrieved
+ *  @return The ID of the client that sent the message, 0 if no data.
  */
 int DSerialMaster::getData(char *buffer){
   int client_id;
@@ -148,16 +148,14 @@ int DSerialMaster::getData(char *buffer){
   return client_id;
 }
 
-/** @brief runs a client search and returns the results
+/** @brief runs a client search
  *
  *  A client search consists of pinging each client address between 1 and 
  *  MAX_CLIENTS. If the client responds, then it gets put in our array.
  *
- *  @param clients  a pointer to memory of at least MAX_CLIENTS size to put
-                      the the found clients into. 
- *  @return The number of clients found
+ *  @return No return value
  */
-int DSerialMaster::getClients(uint8_t *clients){
+int identifyClients() {
   unsigned long start_millis;
   char temp[MAX_MSG_LEN];
   char message[3] = {(char)1, (char)PING, '\0'};
@@ -181,6 +179,15 @@ int DSerialMaster::getClients(uint8_t *clients){
       }
     }
   }
+}
+
+/** @brief gets the client array and number of clients
+ *
+ *  @param clients  a pointer to memory of at least MAX_CLIENTS size to put
+                      the the clients into 
+ *  @return The number of clients found
+ */
+int DSerialMaster::getClients(uint8_t *clients){
   memcpy(clients, _clients, _num_clients);
   return _num_clients;
 }

@@ -8,6 +8,7 @@ void setup() {
   Serial.begin(9600);
   serial_port.begin(9600);
   uint8_t a[32];
+  master.identifyClients();
   master.getClients(a);
 }
 
