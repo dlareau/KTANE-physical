@@ -42,12 +42,13 @@ int readPacket(Stream &s, char *buffer){
 
     if (in_packet == 1) {
       data_parity ^= rc;
-      if (rc != END) {
+      if (rc != (char)END) {
         buf[index] = rc;
         index++;
       }
-      if(rc == END || index >= MAX_MSG_LEN){
-        buf[--index] = '\0'; //purposefully overwrite parity byte.
+      if(rc == (char)END || index >= MAX_MSG_LEN){
+        index--;
+        buf[index] = '\0'; //purposefully overwrite parity byte.
         strcpy(buffer, buf);
         index = 0;
         in_packet = 0;
@@ -59,7 +60,7 @@ int readPacket(Stream &s, char *buffer){
         }
       }
     }
-    else if (rc == (char)START) {
+    if (rc == (char)START) {
       in_packet = 1;
       data_parity = START;
     }
@@ -81,10 +82,10 @@ int sendPacket(Stream &s, char *message){
   for (int i = 0; message[i] != 0; i++) {
     data_parity = data_parity ^ (uint8_t)message[i];
   }
-  s.print(START);
-  s.print(message);
-  s.print((START ^ data_parity ^ END));
-  s.print(END);
+  s.write(START);
+  s.write(message);
+  s.write((START ^ data_parity ^ END));
+  s.write(END);
   return 1;
 }
 
@@ -157,6 +158,8 @@ int DSerialMaster::getClients(uint8_t *clients){
   unsigned long start_millis;
   char temp[MAX_MSG_LEN];
   char message[3] = {(char)1, (char)PING, '\0'};
+  _num_clients = 0;
+  memset(_clients, 0, MAX_CLIENTS);
 
   while(_state != MASTER_WAITING){
     doSerial();
@@ -202,7 +205,6 @@ int DSerialMaster::doSerial(){
     strcpy(current_msg, short_msg);
     return 1;
   }
-
   switch(_state){
     // WAITING state: ignore incoming, send waiting, otherwise poll.
     case MASTER_WAITING:
@@ -225,7 +227,6 @@ int DSerialMaster::doSerial(){
 
     // SENT state: assumed mid-read, deal with timeout/valid read.
     case MASTER_SENT:
-
       if(result == 0){
         if(millis() - last_millis > TIMEOUT) { // Timed out, send READ again
           if(num_attempts >= MAX_RETRIES){
@@ -236,7 +237,7 @@ int DSerialMaster::doSerial(){
           num_attempts++;
         }
       } else if(result == 1) { // Useful packet
-        if(buffer[1] == ACK){ // Client ACK'd read request indicating no data
+        if(buffer[1] == (char)ACK){ // Client ACK'd read request indicating no data
           free(buffer);
           _state = MASTER_WAITING;
         } else {
@@ -263,7 +264,7 @@ int DSerialMaster::doSerial(){
           num_attempts++;
         }
       } else if(result == 1) {      // Useful packet
-        if(buffer[1] == ACK){
+        if(buffer[1] == (char)ACK){
           free(buffer);
           _state = MASTER_WAITING;
         } else {
@@ -350,26 +351,32 @@ int DSerialClient::doSerial(){
     free(buffer);
     return 1;
   }
-  if(buffer[1] == NAK){
+  if(buffer[1] == (char)NAK){
     free(buffer);
     sendPacket(_stream, current_msg);
     return 1;
   }
-
   switch(_state){
     // WAITING state: respond to any requests
     case CLIENT_WAITING:
-      if(buffer[1] == READ and _num_out_messages > 0){
-        strcpy(current_msg, _out_messages[_num_out_messages-1]);
-        free(_out_messages[--_num_out_messages]);
-        _state = CLIENT_SENT;
-      } else if(buffer[1] == WRITE) {
+      if(buffer[1] == (char)READ){
+        if(_num_out_messages > 0){
+          strcpy(current_msg, _out_messages[_num_out_messages-1]);
+          free(_out_messages[--_num_out_messages]);
+          _state = CLIENT_SENT;
+        } else {
+          short_msg[1] = (char)ACK;
+          strcpy(current_msg, short_msg);
+        }
+        free(buffer);
+      } else if(buffer[1] == (char)WRITE) {
         _in_messages[_num_in_messages++] = buffer;
         short_msg[1] = (char)ACK;
         strcpy(current_msg, short_msg);
-      } else if(buffer[1] == PING) {
+      } else if(buffer[1] == (char)PING) {
         short_msg[1] = (char)ACK;
         strcpy(current_msg, short_msg);
+        free(buffer);
       }
       sendPacket(_stream, current_msg);
 
@@ -377,7 +384,7 @@ int DSerialClient::doSerial(){
 
     // SENT state: look for and respond to ACK.
     case CLIENT_SENT:
-      if(buffer[1] == ACK){ // Client ACK'd read request indicating no data
+      if(buffer[1] == (char)ACK){ // Client ACK'd read request indicating no data
         _state = CLIENT_WAITING;
         short_msg[1] = (char)ACK;
         strcpy(current_msg, short_msg);
