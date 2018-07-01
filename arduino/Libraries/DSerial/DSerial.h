@@ -74,7 +74,7 @@
 
 #define TIMEOUT 50
 #define MAX_CLIENTS 16
-#define MAX_MSG_LEN 10
+#define MAX_MSG_LEN 16
 #define MAX_QUEUE_SIZE 18
 #define MAX_RETRIES 3
 
