@@ -7,6 +7,7 @@
 #include "Arduino.h"
 #include "DSerial.h"
 #include <string.h>
+#include "stringQueue.h"
 
 /** @brief Reads a packet from the specified stream if one is available
  *
@@ -96,11 +97,9 @@ int sendPacket(Stream &s, char *message){
 DSerialMaster::DSerialMaster(Stream &port):_stream(port){
   _state = 0;
   _num_clients = 0;
-  _num_in_messages = 0;
-  _num_out_messages = 0;
   memset(_clients, 0, MAX_CLIENTS);
-  memset(_in_messages, 0, MAX_CLIENTS);
-  memset(_out_messages, 0, MAX_CLIENTS);
+  stringQueueInit(&_in_messages, MAX_QUEUE_SIZE);
+  stringQueueInit(&_out_messages, MAX_QUEUE_SIZE);
 }
 
 /** @brief sends a data string to the specified client.
@@ -114,7 +113,7 @@ DSerialMaster::DSerialMaster(Stream &port):_stream(port){
  *  @return A status code indicating success or failure
  */
 int DSerialMaster::sendData(uint8_t client_id, char *data){
-  if(_num_out_messages >= MAX_QUEUE_SIZE){
+  if(stringQueueIsFull(&_out_messages)){
     return 0;
   }
   char *new_message = (char*) malloc(MAX_MSG_LEN+2);
@@ -124,7 +123,7 @@ int DSerialMaster::sendData(uint8_t client_id, char *data){
   strcpy(new_message+2, data);
   new_message[0] = (char)client_id;
   new_message[1] = WRITE;
-  _out_messages[_num_out_messages++] = new_message;
+  stringQueueAdd(&_out_messages, new_message);
   return 1;
 }
 
@@ -135,13 +134,14 @@ int DSerialMaster::sendData(uint8_t client_id, char *data){
  */
 int DSerialMaster::getData(char *buffer){
   int client_id;
-  if(_num_in_messages == 0){
+  char *message;
+  if(stringQueueIsEmpty(&_in_messages)){
     return 0;
   }
-  _num_in_messages--;
-  client_id = _in_messages[_num_in_messages][0];
-  strcpy(buffer, _in_messages[_num_in_messages]+1);
-  free(_in_messages[_num_in_messages]);
+  message = stringQueueRemove(&_in_messages);
+  client_id = message[0];
+  strcpy(buffer, message+1);
+  free(message);
   return client_id;
 }
 
@@ -200,6 +200,7 @@ int DSerialMaster::doSerial(){
   static uint8_t num_attempts;
   static uint8_t client_index = 0;
   static char    current_msg[MAX_MSG_LEN+1];
+  char *msg_ptr;
   char short_msg[3] = {(char)_clients[client_index], '\0', '\0'};
 
   // Read stream for input
@@ -221,11 +222,12 @@ int DSerialMaster::doSerial(){
   switch(_state){
     // WAITING state: ignore incoming, send waiting, otherwise poll.
     case MASTER_WAITING:
-      if(_num_out_messages > 0){
-        strcpy(current_msg, _out_messages[_num_out_messages-1]);
-        free(_out_messages[--_num_out_messages]);
+      if(!stringQueueIsEmpty(&_out_messages)){
+        msg_ptr =  stringQueueRemove(&_out_messages);
+        strcpy(current_msg, msg_ptr);
+        free(msg_ptr);
         _state = MASTER_ACK;
-      } else if(_num_clients > 0 && _num_in_messages < MAX_QUEUE_SIZE) {
+      } else if(_num_clients > 0 && !stringQueueIsFull(&_in_messages)) {
         client_index = (client_index + 1) % _num_clients;
         short_msg[0] = (char)_clients[client_index];
         short_msg[1] = READ;
@@ -256,7 +258,7 @@ int DSerialMaster::doSerial(){
           free(buffer);
           _state = MASTER_WAITING;
         } else {
-          _in_messages[_num_in_messages++] = buffer;
+          stringQueueAdd(&_in_messages, buffer); // we're safe because of earlier check
           short_msg[1] = ACK;
           sendPacket(_stream, short_msg);
           strcpy(current_msg, short_msg);
@@ -304,10 +306,8 @@ int DSerialMaster::doSerial(){
 DSerialClient::DSerialClient(Stream &port, uint8_t client_number):_stream(port){
   _state = 0;
   _client_number = client_number;
-  _num_in_messages = 0;
-  _num_out_messages = 0;
-  memset(_in_messages, 0, MAX_CLIENTS);
-  memset(_out_messages, 0, MAX_CLIENTS);
+  stringQueueInit(&_in_messages, MAX_QUEUE_SIZE);
+  stringQueueInit(&_out_messages, MAX_QUEUE_SIZE);
 }
 
 /** @brief sends a data string to the master.
@@ -320,7 +320,7 @@ DSerialClient::DSerialClient(Stream &port, uint8_t client_number):_stream(port){
  *  @return A status code indicating success or failure
  */
 int DSerialClient::sendData(char *data){
-  if(_num_out_messages >= MAX_QUEUE_SIZE){
+  if(stringQueueIsFull(&_out_messages)){
     return 0;
   }
   char *new_message = (char*) malloc(MAX_MSG_LEN+1);
@@ -329,7 +329,7 @@ int DSerialClient::sendData(char *data){
   }
   strcpy(new_message+1, data);
   new_message[0] = (char)_client_number;
-  _out_messages[_num_out_messages++] = new_message;
+  stringQueueAdd(&_out_messages, new_message);
   return 1;
 }
 
@@ -339,18 +339,20 @@ int DSerialClient::sendData(char *data){
  *  @return A status code indicating whether data was retrieved
  */
 int DSerialClient::getData(char *buffer){
-  if(_num_in_messages == 0){
+  char *message;
+  if(stringQueueIsEmpty(&_in_messages)){
     return 0;
   }
-  _num_in_messages--;
-  strcpy(buffer, _in_messages[_num_in_messages]+2);
-  free(_in_messages[_num_in_messages]);
+  message = stringQueueRemove(&_in_messages);
+  strcpy(buffer, message+2);
+  free(message);
   return 1;
 }
 
 int DSerialClient::doSerial(){
   static char    current_msg[MAX_MSG_LEN+1];
   char short_msg[3] = {(char)_client_number, '\0', '\0'};
+  char *msg_ptr;
 
   // Read stream for input
   char *buffer = (char*) malloc(MAX_MSG_LEN+1);
@@ -375,17 +377,18 @@ int DSerialClient::doSerial(){
     // WAITING state: respond to any requests
     case CLIENT_WAITING:
       if(buffer[1] == READ){
-        if(_num_out_messages > 0){
-          strcpy(current_msg, _out_messages[_num_out_messages-1]);
-          free(_out_messages[--_num_out_messages]);
+        if(!stringQueueIsEmpty(&_out_messages)){
+          msg_ptr =  stringQueueRemove(&_out_messages);
+          strcpy(current_msg, msg_ptr);
+          free(msg_ptr);
           _state = CLIENT_SENT;
         } else {
           short_msg[1] = ACK;
           strcpy(current_msg, short_msg);
         }
         free(buffer);
-      } else if(buffer[1] == WRITE && _num_in_messages < MAX_QUEUE_SIZE) {
-        _in_messages[_num_in_messages++] = buffer;
+      } else if(buffer[1] == WRITE && !stringQueueIsFull(&_in_messages)) {
+        stringQueueAdd(&_in_messages, buffer);
         short_msg[1] = ACK;
         strcpy(current_msg, short_msg);
       } else if(buffer[1] == PING) {
