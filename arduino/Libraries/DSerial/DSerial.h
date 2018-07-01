@@ -36,7 +36,6 @@
  *  takes longer, but because the whole library is non-blocking it's fine.
  *
  *  Future improvements:
- *    - Switch queues to FIFO rather than LIFO
  *    - Switch to all length based binary processing to allow nulls
  *    - Have the client address be broken out into the packet datatype.
  *
