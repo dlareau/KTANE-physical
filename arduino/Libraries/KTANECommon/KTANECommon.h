@@ -48,8 +48,6 @@ typedef struct config_st {
 void config_to_raw(raw_config_t *raw_config, config_t *config_t);
 void raw_to_config(raw_config_t *raw_config, config_t *config_t);
 
-void delay_with_updates();
-
 class KTANEModule {
   public:
     KTANEModule(DSerialClient &dserial);
@@ -94,3 +92,6 @@ class KTANEController {
     uint8_t _solves[MAX_CLIENTS];
     uint8_t _readies[MAX_CLIENTS];
 };
+
+void delayWithUpdates(KTANEModule &module, unsigned int length);
+void delayWithUpdates(KTANEController &controller, unsigned int length);

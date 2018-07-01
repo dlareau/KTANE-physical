@@ -29,6 +29,20 @@ void raw_to_config(raw_config_t *raw_config, config_t *config) {
   config->serial[6] = '\0';
 }
 
+void delayWithUpdates(KTANEModule &module, unsigned int length) {
+  unsigned long start_millis = millis();
+  while(millis() - start_millis < length){
+    module.interpretData();
+  }
+}
+
+void delayWithUpdates(KTANEController &controller, unsigned int length) {
+  unsigned long start_millis = millis();
+  while(millis() - start_millis < length){
+    controller.interpretData();
+  }
+}
+
 KTANEModule::KTANEModule(DSerialClient &dserial):_dserial(dserial) {
   memset(&_config, 0, sizeof(config_t));
   _got_config = 0;
