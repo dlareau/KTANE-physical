@@ -2,11 +2,6 @@
  *  @brief The DSerial library implementation
  *
  *  @author Dillon Lareau (dlareau)
- *
- *  @bug Return codes are checked less often than they should be...
- *  @bug Library does not currently deal with too many in_messages.
- *  @bug Client does not handle unexpected messages that pass parity gracefully.
- *  @bug If identify clients is not run or has failed, attempts to read will buffer overflow
  */
 
 #include "Arduino.h"
@@ -79,6 +74,9 @@ int readPacket(Stream &s, char *buffer){
  */
 int sendPacket(Stream &s, char *message){
   char data_parity = 0;
+  if(strlen(message) == 0){
+    return 0; // Should only happen on library failure
+  }
   for (int i = 0; message[i] != 0; i++) {
     data_parity = data_parity ^ (uint8_t)message[i];
   }
@@ -227,12 +225,14 @@ int DSerialMaster::doSerial(){
         strcpy(current_msg, _out_messages[_num_out_messages-1]);
         free(_out_messages[--_num_out_messages]);
         _state = MASTER_ACK;
-      } else {
+      } else if(_num_clients > 0 && _num_in_messages < MAX_QUEUE_SIZE) {
         client_index = (client_index + 1) % _num_clients;
         short_msg[0] = (char)_clients[client_index];
         short_msg[1] = READ;
         strcpy(current_msg, short_msg);
         _state = MASTER_SENT;
+      } else {
+        return 1; // No data to send and no clients to poll
       }
       sendPacket(_stream, current_msg);
       num_attempts = 0;
@@ -269,7 +269,7 @@ int DSerialMaster::doSerial(){
     // ACK state: waiting for client ACK, dealing with timeouts and non-ACKs
     case MASTER_ACK:
       // Deal with packet
-      if(result == 0){       // Timed out, send READ again
+      if(result == 0){       // Timed out, send ACK again
         if(millis() - last_millis > TIMEOUT) {
           if(num_attempts >= MAX_RETRIES){
             _state = MASTER_WAITING;
@@ -384,7 +384,7 @@ int DSerialClient::doSerial(){
           strcpy(current_msg, short_msg);
         }
         free(buffer);
-      } else if(buffer[1] == WRITE) {
+      } else if(buffer[1] == WRITE && _num_in_messages < MAX_QUEUE_SIZE) {
         _in_messages[_num_in_messages++] = buffer;
         short_msg[1] = ACK;
         strcpy(current_msg, short_msg);
@@ -392,6 +392,8 @@ int DSerialClient::doSerial(){
         short_msg[1] = ACK;
         strcpy(current_msg, short_msg);
         free(buffer);
+      } else {
+        return 0;
       }
       sendPacket(_stream, current_msg);
 
