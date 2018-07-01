@@ -1,6 +1,6 @@
 TOPTARGETS := all clean upload
 
-SUBDIRS := $(filter-out Libraries/.,$(wildcard */.))
+SUBDIRS := $(filter-out oldModules/.,$(filter-out Libraries/.,$(wildcard */.)))
 
 $(TOPTARGETS): $(SUBDIRS)
 $(SUBDIRS):

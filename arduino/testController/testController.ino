@@ -27,13 +27,10 @@ void setup() {
   config.serial[6] = '\0';
   // displayControllableConfig();
   delay(1000);
-  Serial.print("I");
   master.identifyClients();
   // controller.sendReset() followed by some doSerial?
   controller.sendConfig(&config);
-  Serial.print("S");
   while(!controller.clientsAreReady()) {
-    Serial.print("W");
     controller.interpretData();
   }
 }

@@ -19,14 +19,11 @@ void setup() {
   pinMode(2, INPUT);
   // END TEMP COMMANDS
 
-  Serial.print("B");
   while(!module.getConfig()){
     module.interpretData();
   }
-  Serial.print("A");
   //randomizeModule();
   module.sendReady();
-  Serial.print("S");
 }
 
 void loop() {
@@ -37,8 +34,7 @@ void loop() {
   if (button_state != last_button_state && button_state) {
     last_button_state = button_state;
     module.sendStrike();
-    Serial.print("E");
-    delay(5);
+    delayWithUpdates(module, 1000);
   }
 
   /*
