@@ -1,6 +1,8 @@
 /** @file KTANECommon.cpp
  *  @brief Headers and definitions for common KTANE functionality
  *
+ *  Possibly restart microcontroller on reset?
+ *
  *  @author Dillon Lareau (dlareau)
  */
 
@@ -30,6 +32,9 @@ void raw_to_config(raw_config_t *raw_config, config_t *config) {
 KTANEModule::KTANEModule(DSerialClient &dserial):_dserial(dserial) {
   memset(&_config, 0, sizeof(config_t));
   _got_config = 0;
+  _num_strikes = 0;
+  _got_reset = 0;
+  is_solved = 0;
 }
 
 void KTANEModule::interpretData(){
