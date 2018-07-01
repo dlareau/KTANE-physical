@@ -6,6 +6,7 @@
  *  @bug Return codes are checked less often than they should be...
  *  @bug Library does not currently deal with too many in_messages.
  *  @bug Client does not handle unexpected messages that pass parity gracefully.
+ *  @bug If identify clients is not run or has failed, attempts to read will buffer overflow
  */
 
 #include "Arduino.h"
@@ -28,8 +29,6 @@
  *            0 - No new packet, buffer is returned empty.
  *            1 - New packet in buffer, packet is valid.
  *           -1 - New packet in buffer, packet failed parity check.
- *
- *  @bug Function does not currently out-of-order start/end bytes well. 
  */
 int readPacket(Stream &s, char *buffer){
   static int in_packet = 0;
@@ -153,9 +152,9 @@ int DSerialMaster::getData(char *buffer){
  *  A client search consists of pinging each client address between 1 and 
  *  MAX_CLIENTS. If the client responds, then it gets put in our array.
  *
- *  @return No return value
+ *  @return The number of clients found
  */
-int identifyClients() {
+int DSerialMaster::identifyClients() {
   unsigned long start_millis;
   char temp[MAX_MSG_LEN];
   char message[3] = {(char)1, PING, '\0'};
@@ -163,7 +162,7 @@ int identifyClients() {
   memset(_clients, 0, MAX_CLIENTS);
 
   while(_state != MASTER_WAITING){
-    doSerial();
+    doSerial(); // RETURN_CODE?
   }
 
   for (int i = 1; i < MAX_CLIENTS; i++) {
@@ -179,16 +178,22 @@ int identifyClients() {
       }
     }
   }
+  return _num_clients;
 }
 
 /** @brief gets the client array and number of clients
+ *
+ *  If the clients argument is NULL, the number of clients will still be
+ *  returned, but it will not attempt to populate the array.
  *
  *  @param clients  a pointer to memory of at least MAX_CLIENTS size to put
                       the the clients into 
  *  @return The number of clients found
  */
 int DSerialMaster::getClients(uint8_t *clients){
-  memcpy(clients, _clients, _num_clients);
+  if(clients != NULL){
+    memcpy(clients, _clients, _num_clients);
+  }
   return _num_clients;
 }
 

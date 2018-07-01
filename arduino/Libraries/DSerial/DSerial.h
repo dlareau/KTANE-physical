@@ -93,7 +93,7 @@ class DSerialMaster {
     int sendData(uint8_t client_id, char *data);
     int getData(char *buffer);
     int doSerial();
-    void identifyClients();
+    int identifyClients();
     int getClients(uint8_t *clients);
 
   private:
