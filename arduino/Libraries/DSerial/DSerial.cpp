@@ -32,6 +32,7 @@ int readPacket(Stream &s, char *buffer){
   static char buf[MAX_MSG_LEN+1];
   static char data_parity = 0;
   char rc;
+  int passed_parity = 0;
 
   while (s.available() > 0) {
     rc = s.read();
@@ -46,10 +47,11 @@ int readPacket(Stream &s, char *buffer){
         index--;
         buf[index] = '\0'; //purposefully overwrite parity byte.
         strcpy(buffer, buf);
+        passed_parity = ((data_parity & 0x7F) == 0);
         index = 0;
         in_packet = 0;
         data_parity = 0;
-        if(data_parity == 0){
+        if(passed_parity){
           return 1;
         } else {
           return -1;
@@ -83,7 +85,7 @@ int sendPacket(Stream &s, char *message){
   }
   s.write(START);
   s.write(message);
-  s.write((START ^ data_parity ^ END));
+  s.write((START ^ data_parity ^ END) & 0x7F);
   s.write(END);
   return 1;
 }
