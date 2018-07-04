@@ -202,6 +202,9 @@ void setup() {
 
   pinMode(3, OUTPUT);
   pinMode(4, OUTPUT);
+  pinMode(DATA_IN_PIN, OUTPUT);
+  pinMode(LOAD_PIN, OUTPUT);
+  pinMode(CLOCK_PIN, OUTPUT);
 
   randomSeed(analogRead(0));
 
@@ -212,6 +215,9 @@ void setup() {
     module.interpretData();
   }
   module.sendReady();
+  digitalWrite(3, HIGH);
+  delayWithUpdates(module, 1000);
+  digitalWrite(3, LOW);
 }
 
 void loop() {
