@@ -36,8 +36,12 @@ int readPacket(Stream &s, char *buffer){
 
   while (s.available() > 0) {
     rc = s.read();
-
-    if (in_packet == 1) {
+    if (rc == START) {
+      in_packet = 1;
+      data_parity = START;
+      index = 0;
+    }
+    else if (in_packet == 1) {
       data_parity ^= rc;
       if (rc != END) {
         buf[index] = rc;
@@ -57,10 +61,6 @@ int readPacket(Stream &s, char *buffer){
           return -1;
         }
       }
-    }
-    if (rc == START) {
-      in_packet = 1;
-      data_parity = START;
     }
   }
   return 0;

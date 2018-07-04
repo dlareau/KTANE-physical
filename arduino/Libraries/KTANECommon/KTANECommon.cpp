@@ -153,7 +153,7 @@ void KTANEController::interpretData() {
   int client_id = _dserial.getData(out_message);
   if(client_id) {
     if(out_message[0] == STRIKE) {
-      _strikes[client_id] = 1;
+      _strikes[client_id] = _strikes[client_id] + 1;
       sendStrikes();
     } else if(out_message[0] == SOLVE) {
       _solves[client_id] = 1;
@@ -225,7 +225,7 @@ int KTANEController::sendReset() {
 
 int KTANEController::sendStrikes() {
   int num_strikes = getStrikes();
-  char msg[2] = {RESET, '\0'};
+  char msg[3] = {NUM_STRIKES, (char)num_strikes, '\0'};
   int err = 0;
   uint8_t clients[MAX_CLIENTS];
   int num_clients = 0;
