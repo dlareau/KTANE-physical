@@ -2,22 +2,14 @@
 #include "KTANECommon.h"
 #include <NeoICSerial.h>
 
-#define MY_ADDRESS 2
-
 NeoICSerial serial_port;
 DSerialClient client(serial_port, MY_ADDRESS);
 KTANEModule module(client);
 
-int button_state = 0;
-int last_button_state = 0;
-
 void setup() {
-  serial_port.begin(9600);
-  Serial.begin(9600);
-
-  // BEGIN TEMP COMMANDS
-  pinMode(2, INPUT);
-  // END TEMP COMMANDS
+  pinMode(LED_BUILTIN, OUTPUT);
+  serial_port.begin(19200);
+  Serial.begin(19200);
 
   while(!module.getConfig()){
     module.interpretData();
@@ -28,14 +20,12 @@ void setup() {
 
 void loop() {
   module.interpretData();
-
+  digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
+  delayWithUpdates(module, 1000);                       // wait for a second
+  digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
+  delayWithUpdates(module, 1000);                       // wait for a second
   // TEMP
-  button_state = digitalRead(2);
-  if (button_state != last_button_state && button_state) {
-    last_button_state = button_state;
-    module.sendStrike();
-    delayWithUpdates(module, 1000);
-  }
+
 
   /*
   if(!module.is_solved){
