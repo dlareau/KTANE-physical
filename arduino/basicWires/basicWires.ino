@@ -2,8 +2,6 @@
 #include "KTANECommon.h"
 #include <NeoICSerial.h>
 
-#define MY_ADDRESS 3
-
 NeoICSerial serial_port;
 DSerialClient client(serial_port, MY_ADDRESS);
 KTANEModule module(client);
@@ -80,8 +78,8 @@ void youLose() {
 }
 
 void setup() {
-  serial_port.begin(9600);
-  Serial.begin(9600);
+  serial_port.begin(19200);
+  Serial.begin(19200);
 
   // Temp:
   pinMode(3, OUTPUT);
