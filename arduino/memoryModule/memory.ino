@@ -197,8 +197,12 @@ void generateRandomNumbers() {
 }
 
 void setup() {
-  serial_port.begin(9600);
-  Serial.begin(9600);
+  serial_port.begin(19200);
+  Serial.begin(19200);
+
+  pinMode(3, OUTPUT);
+  pinMode(4, OUTPUT);
+
   randomSeed(analogRead(0));
 
   // Generate numbers
