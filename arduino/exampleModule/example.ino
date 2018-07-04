@@ -6,40 +6,54 @@ NeoICSerial serial_port;
 DSerialClient client(serial_port, MY_ADDRESS);
 KTANEModule module(client);
 
+void youWin() {
+  module.sendSolve();
+  digitalWrite(3, HIGH);
+}
+
+void youLose() {
+  module.sendStrike();
+  digitalWrite(4, HIGH);
+  delayWithUpdates(module, 500);
+  digitalWrite(4, LOW);
+}
+
 void setup() {
-  pinMode(LED_BUILTIN, OUTPUT);
   serial_port.begin(19200);
   Serial.begin(19200);
+
+  pinMode(3, OUTPUT);
+  pinMode(4, OUTPUT);
 
   while(!module.getConfig()){
     module.interpretData();
   }
-  //randomizeModule();
+
+  /*
+    Do setup here
+  */
+
   module.sendReady();
+  digitalWrite(3, HIGH);
+  delayWithUpdates(module, 1000);
+  digitalWrite(3, LOW);
 }
 
 void loop() {
   module.interpretData();
-  digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-  delayWithUpdates(module, 1000);                       // wait for a second
-  digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-  delayWithUpdates(module, 1000);                       // wait for a second
-  // TEMP
 
-
-  /*
   if(!module.is_solved){
+    /*
     checkInputs();
-    they_solved_it = checkIfSolved();
-    updateOutputs();
     if(they_solved_it) {
       module.sendSolve();
-      turnSolvedLightGreen();
+      youWin();
     }
     if(they_messed_up) {
       module.sendStrike();
-      flashSolvedLightRed();
+      youLose();
     }
+    updateOutputs();
+    */
   }
-  */
 }
