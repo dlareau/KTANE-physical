@@ -205,6 +205,10 @@ void setup() {
   pinMode(DATA_IN_PIN, OUTPUT);
   pinMode(LOAD_PIN, OUTPUT);
   pinMode(CLOCK_PIN, OUTPUT);
+  pinMode(9, INPUT);
+  pinMode(10, INPUT);
+  pinMode(11, INPUT);
+  pinMode(12, INPUT);
 
   randomSeed(analogRead(0));
 
