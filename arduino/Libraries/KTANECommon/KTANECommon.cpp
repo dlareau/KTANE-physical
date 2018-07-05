@@ -129,6 +129,18 @@ int KTANEModule::serialContains(char c) {
   return !!((int)strchr(_config.serial, c));
 }
 
+int KTANEModule::serialContainsVowel() {
+  int serial_length = strlen(_config.serial);
+  char temp;
+  for(int i = 0; i < serial_length; i++) {
+    temp = _config.serial[i];
+    if(temp == 'A' || temp == 'E' || temp == 'I' || temp == 'O' || temp == 'U') {
+      return 1;
+    }
+  }
+  return 0;
+}
+
 int KTANEModule::getNumStrikes() {
   return _num_strikes;
 }

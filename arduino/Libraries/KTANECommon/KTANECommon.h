@@ -64,6 +64,7 @@ class KTANEModule {
     int getRJ45Port();
     char getSerialDigit(int index);
     int serialContains(char c);
+    int serialContainsVowel();
     int getNumStrikes();
     int getReset();
     int is_solved;
