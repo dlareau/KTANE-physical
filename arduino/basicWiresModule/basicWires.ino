@@ -4,7 +4,7 @@
 
 NeoICSerial serial_port;
 DSerialClient client(serial_port, MY_ADDRESS);
-KTANEModule module(client);
+KTANEModule module(client, 3, 4);
 
 // Resistor values = 33, 330, 1000, 3300, 22000
 // Wire colors  = White, Blue, Yellow, Black, Red
@@ -65,25 +65,9 @@ int relLastColorIndex(int color) {
   return retIndex;
 }
 
-void youWin() {
-  module.sendSolve();
-  digitalWrite(3, HIGH);
-}
-
-void youLose() {
-  module.sendStrike();
-  digitalWrite(4, HIGH);
-  delayWithUpdates(module, 500);
-  digitalWrite(4, LOW);
-}
-
 void setup() {
   serial_port.begin(19200);
   Serial.begin(19200);
-
-  // Temp:
-  pinMode(3, OUTPUT);
-  pinMode(4, OUTPUT);
 
   // Detect wires:
   pinMode(A0, INPUT);
@@ -161,7 +145,7 @@ void setup() {
       break;
 
     default:
-      youLose();
+      module.strike();
   }
 
   int temp = wire_to_cut;
@@ -176,9 +160,6 @@ void setup() {
   }
 
   module.sendReady();
-  digitalWrite(3, HIGH);
-  delayWithUpdates(module, 1000);
-  digitalWrite(3, LOW);
 }
 
 void loop() {
@@ -191,9 +172,9 @@ void loop() {
         delay(10);
         if(wires[i] != voltageToWire(analogRead(i))) { // Check again for debouncing reasons
           if(i == cut_index) {
-            youWin();
+            module.win();
           } else {
-            youLose();
+            module.strike();
             wires[i] = voltageToWire(analogRead(i));
           }
         }

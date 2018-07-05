@@ -4,27 +4,12 @@
 
 NeoICSerial serial_port;
 DSerialClient client(serial_port, MY_ADDRESS);
-KTANEModule module(client);
-
-void youWin() {
-  module.sendSolve();
-  digitalWrite(3, HIGH);
-}
-
-void youLose() {
-  module.sendStrike();
-  digitalWrite(4, HIGH);
-  delayWithUpdates(module, 500);
-  digitalWrite(4, LOW);
-}
+KTANEModule module(client, 3, 4);
 
 void setup() {
   serial_port.begin(19200);
   Serial.begin(19200);
-
-  pinMode(3, OUTPUT);
-  pinMode(4, OUTPUT);
-
+  å
   while(!module.getConfig()){
     module.interpretData();
   }
@@ -34,9 +19,6 @@ void setup() {
   */
 
   module.sendReady();
-  digitalWrite(3, HIGH);
-  delayWithUpdates(module, 1000);
-  digitalWrite(3, LOW);
 }
 
 void loop() {
@@ -46,12 +28,10 @@ void loop() {
     /*
     checkInputs();
     if(they_solved_it) {
-      module.sendSolve();
-      youWin();
+      module.win();
     }
     if(they_messed_up) {
-      module.sendStrike();
-      youLose();
+      module.strike();
     }
     updateOutputs();
     */

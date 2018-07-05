@@ -8,7 +8,7 @@
 
 NeoICSerial serial_port;
 DSerialClient client(serial_port, MY_ADDRESS);
-KTANEModule module(client);
+KTANEModule module(client, 3, 4);
 
 uint8_t bottom_nums[5][4];
 uint8_t top_nums[5];
@@ -63,18 +63,6 @@ void updateDisplays() {
   maxSingle(2, constants[bottom_nums[stage][2]]);
   maxSingle(3, constants[bottom_nums[stage][3]]);
   maxSingle(4, constants[top_nums[stage]]);
-}
-
-void youWin() {
-  module.sendSolve();
-  digitalWrite(3, HIGH);
-}
-
-void youLose() {
-  module.sendStrike();
-  digitalWrite(4, HIGH);
-  delayWithUpdates(module, 500);
-  digitalWrite(4, LOW);
 }
 
 void displayWaitingScreen() {
@@ -200,8 +188,6 @@ void setup() {
   serial_port.begin(19200);
   Serial.begin(19200);
 
-  pinMode(3, OUTPUT);
-  pinMode(4, OUTPUT);
   pinMode(DATA_IN_PIN, OUTPUT);
   pinMode(LOAD_PIN, OUTPUT);
   pinMode(CLOCK_PIN, OUTPUT);
@@ -219,9 +205,6 @@ void setup() {
     module.interpretData();
   }
   module.sendReady();
-  digitalWrite(3, HIGH);
-  delayWithUpdates(module, 1000);
-  digitalWrite(3, LOW);
 }
 
 void loop() {
@@ -246,10 +229,14 @@ void loop() {
       } else {
         stage = 0;
         generateRandomNumbers();
-        youLose();
+        module.strike();
       }
+      if(stage == 5){
+        module.win();
+      } else {
       displayWaitingScreen();
       updateDisplays();
+      }
     }
   }
 

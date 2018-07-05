@@ -4,7 +4,7 @@
 
 NeoICSerial serial_port;
 DSerialClient client(serial_port, MY_ADDRESS);
-KTANEModule module(client);
+KTANEModule module(client, 3, 4);
 
 #define MAX_NUM_STAGES 5
 #define RED 0
@@ -30,18 +30,6 @@ int mapping[2][3][4] = {
   },
 };
 
-void youWin() {
-  module.sendSolve();
-  digitalWrite(3, HIGH);
-}
-
-void youLose() {
-  module.sendStrike();
-  digitalWrite(4, HIGH);
-  delayWithUpdates(module, 500);
-  digitalWrite(4, LOW);
-}
-
 void update_lights(){
   static unsigned long old_millis = 0;
   static int light_stage = 0;
@@ -66,8 +54,6 @@ void setup() {
   serial_port.begin(19200);
   Serial.begin(19200);
 
-  pinMode(3, OUTPUT);
-  pinMode(4, OUTPUT);
   pinMode(BASE_BUTTON_PIN, INPUT);
   pinMode(BASE_BUTTON_PIN + 1, INPUT);
   pinMode(BASE_BUTTON_PIN + 2, INPUT);
@@ -87,9 +73,6 @@ void setup() {
   stage = 0;
 
   module.sendReady();
-  digitalWrite(3, HIGH);
-  delayWithUpdates(module, 1000);
-  digitalWrite(3, LOW);
 }
 
 void loop() {
@@ -113,10 +96,10 @@ void loop() {
     if(button_pressed == mapping[vowel][strikes][light_color]) {
       stage++;
       if(stage == num_stages){
-        youWin();
+        module.win();
       }
     } else {
-      youLose();
+      module.strike();
     }
   }
 }

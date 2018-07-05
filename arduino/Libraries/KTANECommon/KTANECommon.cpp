@@ -43,8 +43,13 @@ void delayWithUpdates(KTANEController &controller, unsigned int length) {
   }
 }
 
-KTANEModule::KTANEModule(DSerialClient &dserial):_dserial(dserial) {
+KTANEModule::KTANEModule(DSerialClient &dserial, int green_led_pin, 
+                         int red_led_pin):_dserial(dserial) {
   memset(&_config, 0, sizeof(config_t));
+  _red_led_pin = red_led_pin;
+  _green_led_pin = green_led_pin;
+  pinMode(_green_led_pin, OUTPUT);
+  pinMode(_red_led_pin, OUTPUT);
   _got_config = 0;
   _num_strikes = 0;
   _got_reset = 0;
@@ -64,15 +69,31 @@ void KTANEModule::interpretData(){
       _got_config = 0;
       memset(&_config, 0, sizeof(config_t));
       _got_reset = 1;
+      digitalWrite(_green_led_pin, LOW);
     } else if(out_message[0] == NUM_STRIKES) {
       _num_strikes = out_message[1];
     }
   }
 }
 
+// TODO: make non-blocking
+// currently will block non-communication code for 500ms
+int strike() {
+  int result = sendStrike();
+  digitalWrite(_red_led_pin, HIGH);
+  delayWithUpdates(*this, 500);
+  digitalWrite(_red_led_pin, LOW);
+  return result;
+}
+
 int KTANEModule::sendStrike() {
   char str[2] = {STRIKE, '\0'};
   return _dserial.sendData(str);
+}
+
+int win() {
+  digitalWrite(_green_led_pin, HIGH);
+  return sendSolve();
 }
 
 int KTANEModule::sendSolve() {
@@ -81,9 +102,16 @@ int KTANEModule::sendSolve() {
   return _dserial.sendData(str);
 }
 
+// TODO: maybe make non-blocking
 int KTANEModule::sendReady() {
   char str[2] = {READY, '\0'};
-  return _dserial.sendData(str);
+  int result = _dserial.sendData(str);
+  if(result){
+    digitalWrite(_green_led_pin, HIGH);
+    delayWithUpdates(module, 300);
+    digitalWrite(_green_led_pin, LOW);
+  }
+  return result;
 }
 
 config_t *KTANEModule::getConfig() {

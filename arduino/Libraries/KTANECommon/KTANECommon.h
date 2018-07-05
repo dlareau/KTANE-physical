@@ -50,9 +50,11 @@ void raw_to_config(raw_config_t *raw_config, config_t *config_t);
 
 class KTANEModule {
   public:
-    KTANEModule(DSerialClient &dserial);
+    KTANEModule(DSerialClient &dserial, int green_led_pin, int red_led_pin);
     void interpretData();
+    int strike();
     int sendStrike();
+    int win();
     int sendSolve();
     int sendReady();
     config_t *getConfig();
@@ -71,6 +73,8 @@ class KTANEModule {
   private:
     DSerialClient &_dserial;
     config_t _config;
+    int _green_led_pin;
+    int _red_led_pin;
     int _got_config;
     int _num_strikes;
     int _got_reset;
