@@ -9,7 +9,7 @@ KTANEModule module(client, 3, 4);
 void setup() {
   serial_port.begin(19200);
   Serial.begin(19200);
-  å
+  
   while(!module.getConfig()){
     module.interpretData();
   }

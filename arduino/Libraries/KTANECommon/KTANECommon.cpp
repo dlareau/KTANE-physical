@@ -78,7 +78,7 @@ void KTANEModule::interpretData(){
 
 // TODO: make non-blocking
 // currently will block non-communication code for 500ms
-int strike() {
+int KTANEModule::strike() {
   int result = sendStrike();
   digitalWrite(_red_led_pin, HIGH);
   delayWithUpdates(*this, 500);
@@ -91,7 +91,7 @@ int KTANEModule::sendStrike() {
   return _dserial.sendData(str);
 }
 
-int win() {
+int KTANEModule::win() {
   digitalWrite(_green_led_pin, HIGH);
   return sendSolve();
 }
@@ -108,7 +108,7 @@ int KTANEModule::sendReady() {
   int result = _dserial.sendData(str);
   if(result){
     digitalWrite(_green_led_pin, HIGH);
-    delayWithUpdates(module, 300);
+    delayWithUpdates(*this, 300);
     digitalWrite(_green_led_pin, LOW);
   }
   return result;
