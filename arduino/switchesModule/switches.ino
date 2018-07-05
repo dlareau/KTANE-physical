@@ -13,7 +13,7 @@ uint8_t switch_state, last_switch_state;
 uint8_t bad[10] = {4,11,15,18,19,23,24,26,28,30};
 uint8_t good[22] = {0,1,2,3,5,6,7,8,9,10,12,13,14,16,17,20,21,22,25,27,29,31};
 
-uint8_t goal = good[random(0,23)];
+uint8_t goal = good[random(0,22)];
 
 void setup() {
   serial_port.begin(19200);
