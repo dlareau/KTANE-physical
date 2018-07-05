@@ -2,10 +2,6 @@
 #include "Arduino.h"
 
 #define DOT_TIME 200
-#define DASH_TIME (DOT_TIME * 3)
-#define INTERSPACE_TIME DOT_TIME
-#define INTERCHAR_TIME DASH_TIME
-#define INTERWORD_TIME (DOT_TIME * 7)
 
 char freqs[16][4] = {
   "505",
