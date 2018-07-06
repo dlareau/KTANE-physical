@@ -5,6 +5,7 @@
 #define DATA_IN_PIN 13
 #define LOAD_PIN 12
 #define CLOCK_PIN 14
+#define DISP_SINGLE(x,y) maxSingle((x), (y), LOAD_PIN, CLOCK_PIN, DATA_IN_PIN)
 
 NeoICSerial serial_port;
 DSerialClient client(serial_port, MY_ADDRESS);
@@ -23,31 +24,6 @@ int constants[22] = {
   0b11100001, // 4
 };
 
-void putByte(byte data) {
-  byte i = 8;
-  byte mask;
-  while(i > 0) {
-    mask = 0x01 << (i - 1);      // get bitmask
-    digitalWrite( CLOCK_PIN, LOW);   // tick
-    if (data & mask){            // choose bit
-      digitalWrite(DATA_IN_PIN, HIGH);// send 1
-    }else{
-      digitalWrite(DATA_IN_PIN, LOW); // send 0
-    }
-    digitalWrite(CLOCK_PIN, HIGH);   // tock
-    --i;                         // move to lesser bit
-  }
-}
-
-void maxSingle(byte reg, byte col) {
-  //maxSingle is the "easy"  function to use for a single max7219
-  digitalWrite(LOAD_PIN, LOW);       // begin
-  putByte(reg);                  // specify register
-  putByte(col);                  // put data
-  digitalWrite(LOAD_PIN, LOW);       // and load da stuff
-  digitalWrite(LOAD_PIN,HIGH);
-}
-
 uint8_t getIndexFromNumber(uint8_t *buttons, uint8_t num){
   for(int i = 0; i < 4; i++) {
     if(buttons[i] == num) {
@@ -58,28 +34,28 @@ uint8_t getIndexFromNumber(uint8_t *buttons, uint8_t num){
 }
 
 void updateDisplays() {
-  maxSingle(0, constants[bottom_nums[stage][0]]);
-  maxSingle(1, constants[bottom_nums[stage][1]]);
-  maxSingle(2, constants[bottom_nums[stage][2]]);
-  maxSingle(3, constants[bottom_nums[stage][3]]);
-  maxSingle(4, constants[top_nums[stage]]);
+  DISP_SINGLE(0, constants[bottom_nums[stage][0]]);
+  DISP_SINGLE(1, constants[bottom_nums[stage][1]]);
+  DISP_SINGLE(2, constants[bottom_nums[stage][2]]);
+  DISP_SINGLE(3, constants[bottom_nums[stage][3]]);
+  DISP_SINGLE(4, constants[top_nums[stage]]);
 }
 
 void displayWaitingScreen() {
 
   // needs to delay for a total of 2500
   for(int i = 0; i < 5; i++) {
-    maxSingle(i, 0);
+    DISP_SINGLE(i, 0);
     delayWithUpdates(module, 100);
   }
   for(int i = 0; i < 15; i++){
     for(int j = 0; j < 5; j++) {
-      maxSingle(i, 1 << ((i+j)%7));
+      DISP_SINGLE(i, 1 << ((i+j)%7));
     }
     delayWithUpdates(module, 100);
   }
   for(int i = 0; i < 5; i++) {
-    maxSingle(i, 0);
+    DISP_SINGLE(i, 0);
   }
   delayWithUpdates(module, 500);
 }

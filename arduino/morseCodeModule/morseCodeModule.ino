@@ -8,9 +8,27 @@
 #define BUTTON_TX_PIN 9
 #define MORSE_LED_PIN 10
 
+#define LOAD_PIN 12
+#define DATA_IN_PIN 13
+#define CLOCK_PIN 14
+#define DISP_SINGLE(x,y) maxSingle((x), (y), LOAD_PIN, CLOCK_PIN, DATA_IN_PIN)
+
 NeoICSerial serial_port;
 DSerialClient client(serial_port, MY_ADDRESS);
 KTANEModule module(client, 3, 4);
+
+int constants[22] = {
+  0b11110110, // 0
+  0b11000000, // 1
+  0b01010111, // 2
+  0b11000111, // 3
+  0b11100001, // 4
+  0b11100001, // 5
+  0b11100001, // 6
+  0b11100001, // 7
+  0b11100001, // 8
+  0b11100001, // 9
+};
 
 int goal_freq = random(0, 16);
 int selected_freq = 0;
@@ -98,8 +116,10 @@ void loop() {
       }
     }
 
-    // TODO: Update freq digits
-    Serial.println(freqs[selected_freq]);
+    DISP_SINGLE(0, constants[3]);
+    DISP_SINGLE(1, constants[freqs[selected_freq][0] - '0']);
+    DISP_SINGLE(2, constants[freqs[selected_freq][1] - '0']);
+    DISP_SINGLE(3, constants[freqs[selected_freq][2] - '0']);
 
     if(digitalRead(BUTTON_TX_PIN)) {
       if(selected_freq == goal_freq) {

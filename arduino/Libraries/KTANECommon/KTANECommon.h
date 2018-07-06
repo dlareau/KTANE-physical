@@ -48,6 +48,9 @@ typedef struct config_st {
 void config_to_raw(raw_config_t *raw_config, config_t *config_t);
 void raw_to_config(raw_config_t *raw_config, config_t *config_t);
 
+void putByte(byte data, int clock_pin, int data_in_pin);
+void maxSingle(byte reg, byte col, int load_pin, int data_pin, int clock_pin);
+
 class KTANEModule {
   public:
     KTANEModule(DSerialClient &dserial, int green_led_pin, int red_led_pin);

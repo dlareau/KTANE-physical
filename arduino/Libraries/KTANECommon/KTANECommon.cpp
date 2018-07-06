@@ -43,6 +43,31 @@ void delayWithUpdates(KTANEController &controller, unsigned int length) {
   }
 }
 
+void putByte(byte data, int clock_pin, int data_pin) {
+  byte i = 8;
+  byte mask;
+  while(i > 0) {
+    mask = 0x01 << (i - 1);      // get bitmask
+    digitalWrite(clock_pin, LOW);   // tick
+    if (data & mask){            // choose bit
+      digitalWrite(data_pin, HIGH);// send 1
+    }else{
+      digitalWrite(data_pin, LOW); // send 0
+    }
+    digitalWrite(clock_pin, HIGH);   // tock
+    --i;                         // move to lesser bit
+  }
+}
+
+void maxSingle(byte reg, byte col, int load_pin, int clock_pin, int data_pin) {
+  //maxSingle is the "easy"  function to use for a single max7219
+  digitalWrite(load_pin, LOW);        // begin
+  putByte(reg, clock_pin, data_pin);  // specify register
+  putByte(col, clock_pin, data_pin);  // put data
+  digitalWrite(load_pin, LOW);        // and load da stuff
+  digitalWrite(load_pin,HIGH);
+}
+
 KTANEModule::KTANEModule(DSerialClient &dserial, int green_led_pin, 
                          int red_led_pin):_dserial(dserial) {
   memset(&_config, 0, sizeof(config_t));
