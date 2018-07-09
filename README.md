@@ -6,8 +6,8 @@ Not a real bomb.
 
 | Module Name         | Planned          | Coded            | Made             |
 | ------------------- |:----------------:|:----------------:|:----------------:|
-| Memory              |:heavy_check_mark:|:heavy_check_mark:|                  |
-| Simon Says          |:heavy_check_mark:|:heavy_check_mark:|                  |
+| Memory              |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|
+| Simon Says          |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|
 | Wires               |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|
 | Morse Code          |:heavy_check_mark:|:heavy_check_mark:|                  |
 | The Button          |:heavy_check_mark:|                  |                  |
