@@ -15,6 +15,10 @@ KTANEModule module(client, 3, 4);
 int led_pins[4] = {15, 10, 11, 5};
 int button_pins[4] = {14, 7, 12, 6};
 
+unsigned long last_button_action = 0;
+int button_state = 0;
+int old_button_state = 0;
+int button_stage = 0;
 int stage;
 int num_stages = random(3, MAX_NUM_STAGES + 1);
 int stage_colors[MAX_NUM_STAGES];
@@ -53,6 +57,20 @@ void update_lights(){
   }
 }
 
+int get_button(){
+  int button_pressed = 0;
+  if(digitalRead(button_pins[0])) {
+    button_pressed = RED;
+  } else if(digitalRead(button_pins[1])) {
+    button_pressed = YELLOW;
+  } else if(digitalRead(button_pins[2])) {
+    button_pressed = GREEN;
+  } else if(digitalRead(button_pins[3])) {
+    button_pressed = BLUE;
+  }
+  return button_pressed;
+}
+
 void setup() {
   serial_port.begin(19200);
   Serial.begin(19200);
@@ -82,32 +100,32 @@ void setup() {
 
 void loop() {
   // module.interpretData();
-  int button_pressed = 0;
-
   if(!module.is_solved){
-    if(digitalRead(button_pins[0])) {
-      button_pressed = RED;
-    } else if(digitalRead(button_pins[1])) {
-      button_pressed = YELLOW;
-    } else if(digitalRead(button_pins[2])) {
-      button_pressed = GREEN;
-    } else if(digitalRead(button_pins[3])) {
-      button_pressed = BLUE;
-    }
-
-
     int vowel = 0;//module.serialContainsVowel();
     int strikes = 0;// module.getNumStrikes();
-    int light_color = stage_colors[stage];
     update_lights();
-    // I don't check button sequences, only last button, need to check all.
-    if(button_pressed == mapping[vowel][strikes][light_color]) {
-      stage++;
-      if(stage == num_stages){
-        module.win();
+    if(millis()-last_button_action > 10) {
+      button_state = get_button();
+      last_button_action = millis();
+    }
+    if(button_state != old_button_state) {
+      old_button_state = button_state
+
+      if(button_state != 0){
+        if(button_state == mapping[vowel][strikes][stage_colors[button_stage]]) {
+          if(button_stage == stage) {
+            stage++;
+            button_stage = 0;
+          } else {
+            button_stage++;
+          }
+          if(stage == num_stages) {
+            module.win();
+          }
+        } else {
+          module.strike();
+        }
       }
-    } else if(button_pressed != 0) {
-      module.strike();
     }
   }
 }
