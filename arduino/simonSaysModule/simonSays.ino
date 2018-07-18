@@ -109,7 +109,7 @@ void loop() {
       last_button_action = millis();
     }
     if(button_state != old_button_state) {
-      old_button_state = button_state
+      old_button_state = button_state;
 
       if(button_state != 0){
         if(button_state == mapping[vowel][strikes][stage_colors[button_stage]]) {
