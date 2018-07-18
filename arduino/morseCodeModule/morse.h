@@ -1,7 +1,7 @@
 #pragma once
 #include "Arduino.h"
 
-#define DOT_TIME 200
+#define DOT_TIME 300
 
 char freqs[16][4] = {
   "505",

@@ -8,9 +8,9 @@
 #define BUTTON_TX_PIN 9
 #define MORSE_LED_PIN 10
 
-#define LOAD_PIN 12
-#define DATA_IN_PIN 13
-#define CLOCK_PIN 14
+#define LOAD_PIN 14
+#define DATA_IN_PIN 15
+#define CLOCK_PIN 16
 #define DISP_SINGLE(x,y) maxSingle((x), (y), LOAD_PIN, CLOCK_PIN, DATA_IN_PIN)
 
 NeoICSerial serial_port;
@@ -30,7 +30,7 @@ int constants[22] = {
   0b11100001, // 9
 };
 
-int goal_freq = random(0, 16);
+int goal_freq;
 int selected_freq = 0;
 uint8_t morse_bits[8];
 int morse_index;
@@ -57,11 +57,20 @@ void setup() {
   serial_port.begin(19200);
   Serial.begin(19200);
   
-  while(!module.getConfig()){
-    module.interpretData();
-  }
+  // while(!module.getConfig()){
+  //   module.interpretData();
+  // }
+  randomSeed(analogRead(A5));
+  pinMode(CLOCK_PIN, OUTPUT);
+  pinMode(DATA_IN_PIN, OUTPUT);
+  pinMode(LOAD_PIN, OUTPUT);
+  pinMode(BUTTON_L_PIN, INPUT);
+  pinMode(BUTTON_R_PIN, INPUT);
+  pinMode(BUTTON_TX_PIN, INPUT);
+  pinMode(MORSE_LED_PIN, OUTPUT);
 
   morse_index = 0;
+  goal_freq = random(0, 16);
   for(unsigned int i = 0; i < strlen(words[goal_freq]); i++) {
     char *morse_desc = morse[words[goal_freq][i] - 'a'];
     for(unsigned int j = 0; j < strlen(morse_desc); j++) {
@@ -85,10 +94,11 @@ void setup() {
   morse_length = morse_index;
   morse_index = 0;
 
-  module.sendReady();
+  // module.sendReady();
 }
 
 void doMorse() {
+  Serial.println("morse");
   if(millis() - last_char_time >= DOT_TIME){
     last_char_time = millis();
     digitalWrite(MORSE_LED_PIN, getMorseBit(morse_bits, morse_index));
@@ -97,7 +107,7 @@ void doMorse() {
 }
 
 void loop() {
-  module.interpretData();
+  // module.interpretData();
   doMorse();
 
   if(!module.is_solved){
