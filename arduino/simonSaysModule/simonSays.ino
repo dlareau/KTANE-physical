@@ -86,23 +86,23 @@ void setup() {
   pinMode(led_pins[2], OUTPUT);
   pinMode(led_pins[3], OUTPUT);
 
-  // while(!module.getConfig()){
-  //   module.interpretData();
-  // }
+  while(!module.getConfig()){
+    module.interpretData();
+  }
 
   for(int i = 0; i < num_stages; i++) {
     stage_colors[i] = random(0, 4);
   }
   stage = 0;
 
-  // module.sendReady();
+  module.sendReady();
 }
 
 void loop() {
-  // module.interpretData();
+  module.interpretData();
   if(!module.is_solved){
-    int vowel = 0;//module.serialContainsVowel();
-    int strikes = 0;// module.getNumStrikes();
+    int vowel = module.serialContainsVowel();
+    int strikes = module.getNumStrikes();
     update_lights();
     if(millis()-last_button_action > 10) {
       button_state = get_button();
