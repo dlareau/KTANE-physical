@@ -20,7 +20,7 @@ int button_state = 0;
 int old_button_state = 0;
 int button_stage = 0;
 int stage;
-int num_stages = random(3, MAX_NUM_STAGES + 1);
+int num_stages;
 int stage_colors[MAX_NUM_STAGES];
 int mapping[2][3][4] = {
   { // No Vowel
@@ -76,6 +76,7 @@ void setup() {
   Serial.begin(19200);
 
   randomSeed(analogRead(A5));
+  num_stages = random(3, MAX_NUM_STAGES + 1);
 
   pinMode(button_pins[0], INPUT);
   pinMode(button_pins[1], INPUT);

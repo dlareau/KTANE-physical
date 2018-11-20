@@ -9,12 +9,12 @@ Not a real bomb.
 | Memory              |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|
 | Simon Says          |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|
 | Wires               |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|
-| Morse Code          |:heavy_check_mark:|:heavy_check_mark:|                  |
+| Morse Code          |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|
 | The Button          |:heavy_check_mark:|                  |                  |
 | Maze                |                  |                  |                  |
 | Password            |:heavy_check_mark:|                  |                  |
 | Keypad (symbols)    |:heavy_check_mark:|                  |                  |
-| Switches            |:heavy_check_mark:|:heavy_check_mark:|                  |
+| Switches            |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|
 | Letter Keys         |:heavy_check_mark:|                  |                  |
 | Twobits             |:heavy_check_mark:|                  |                  |
 | Crazy Talk          |:heavy_check_mark:|                  |                  |
