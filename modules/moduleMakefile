@@ -1,7 +1,7 @@
 BOARD_TAG = nano328
 #BOARD_SUB = atmega328
 
-USER_LIB_PATH = $(realpath ../Libraries)
+USER_LIB_PATH = $(realpath ../../Libraries)
 CPPFLAGS += -DMY_ADDRESS=${ADDRESS}
 
 #include /usr/local/opt/arduino-mk/Arduino.mk
