@@ -48,4 +48,8 @@ case "$1" in
 		make -C "$controllerModule" MONITOR_PORT="$controllerPort" upload
 		printf "%s => %s\n\n" "$controllerModule" "$controllerPort"
 		;;
+
+	"handbook")
+		qpdf --empty --pages */instructions.pdf -- handbook.pdf
+		;;
 esac
