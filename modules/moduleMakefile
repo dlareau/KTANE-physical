@@ -1,8 +1,8 @@
-BOARD_TAG = nano328
-#BOARD_SUB = atmega328
+BOARD_TAG = nano
+BOARD_SUB = atmega328
 
-USER_LIB_PATH = $(realpath ../../Libraries)
-CPPFLAGS += -DMY_ADDRESS=${ADDRESS}
+ARDUINO_LIBS = U8g2 DSerial NeoICSerial Wire SPI KTANECommon Adafruit_GFX_Library Adafruit_LED_Backpack_Library
 
-#include /usr/local/opt/arduino-mk/Arduino.mk
-include /usr/share/arduino/Arduino.mk
+CPPFLAGS ?= -DMY_ADDRESS=${ADDRESS}
+
+include $(ARDMK_DIR)/Arduino.mk

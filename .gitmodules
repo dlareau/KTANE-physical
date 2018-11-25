@@ -1,6 +1,3 @@
-[submodule "arduino/Libraries/NeoICSerial"]
-	path = Libraries/NeoICSerial
-	url = https://github.com/SlashDevin/NeoICSerial.git
 [submodule "Libraries/makeEspArduino"]
 	path = Libraries/makeEspArduino
 	url = https://github.com/plerup/makeEspArduino.git
