@@ -45,7 +45,7 @@ typedef struct config_st {
   char         serial[7];
 }config_t;
 
-void config_to_raw(raw_config_t *raw_config, config_t *config_t);
+void config_to_raw(config_t *config, raw_config_t *raw_config_t);
 void raw_to_config(raw_config_t *raw_config, config_t *config_t);
 
 void putByte(byte data, int clock_pin, int data_in_pin);

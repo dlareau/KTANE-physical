@@ -2,33 +2,20 @@
 #include "KTANECommon.h"
 #include <NeoICSerial.h>
 #include "morse.h"
+#include <Wire.h>
+#include <SPI.h>
+#include <Adafruit_GFX.h>
+#include "Adafruit_LEDBackpack.h"
 
-#define BUTTON_L_PIN 5
-#define BUTTON_R_PIN 6
-#define BUTTON_TX_PIN 9
-#define MORSE_LED_PIN 10
-
-#define LOAD_PIN 14
-#define DATA_IN_PIN 15
-#define CLOCK_PIN 16
-#define DISP_SINGLE(x,y) maxSingle((x), (y), LOAD_PIN, CLOCK_PIN, DATA_IN_PIN)
+#define BUTTON_R_PIN A3
+#define BUTTON_L_PIN A2
+#define BUTTON_TX_PIN A1
+#define MORSE_LED_PIN 5
 
 NeoICSerial serial_port;
 DSerialClient client(serial_port, MY_ADDRESS);
 KTANEModule module(client, 3, 4);
-
-int constants[22] = {
-  0b11110110, // 0
-  0b11000000, // 1
-  0b01010111, // 2
-  0b11000111, // 3
-  0b11100001, // 4
-  0b11100001, // 5
-  0b11100001, // 6
-  0b11100001, // 7
-  0b11100001, // 8
-  0b11100001, // 9
-};
+Adafruit_7segment matrix = Adafruit_7segment();
 
 int goal_freq;
 int selected_freq = 0;
@@ -56,17 +43,15 @@ int getMorseBit(uint8_t *bits, int index) {
 void setup() {
   serial_port.begin(19200);
   Serial.begin(19200);
+  matrix.begin(0x70);
   
   // while(!module.getConfig()){
   //   module.interpretData();
   // }
-  randomSeed(analogRead(A5));
-  pinMode(CLOCK_PIN, OUTPUT);
-  pinMode(DATA_IN_PIN, OUTPUT);
-  pinMode(LOAD_PIN, OUTPUT);
-  pinMode(BUTTON_L_PIN, INPUT);
-  pinMode(BUTTON_R_PIN, INPUT);
-  pinMode(BUTTON_TX_PIN, INPUT);
+  randomSeed(analogRead(A0));
+  pinMode(BUTTON_L_PIN, INPUT_PULLUP);
+  pinMode(BUTTON_R_PIN, INPUT_PULLUP);
+  pinMode(BUTTON_TX_PIN, INPUT_PULLUP);
   pinMode(MORSE_LED_PIN, OUTPUT);
 
   morse_index = 0;
@@ -111,14 +96,14 @@ void loop() {
   doMorse();
 
   if(!module.is_solved){
-    if(digitalRead(BUTTON_L_PIN) && (millis() - last_button_time > 250)) {
+    if(!digitalRead(BUTTON_L_PIN) && (millis() - last_button_time > 250)) {
       last_button_time = millis();
       selected_freq--;
       if(selected_freq < 0) {
         selected_freq = 0;
       }
     }
-    if(digitalRead(BUTTON_R_PIN) && (millis() - last_button_time > 250)) {
+    if(!digitalRead(BUTTON_R_PIN) && (millis() - last_button_time > 250)) {
       last_button_time = millis();
       selected_freq++;
       if(selected_freq > 15){
@@ -126,12 +111,14 @@ void loop() {
       }
     }
 
-    DISP_SINGLE(0, constants[3]);
-    DISP_SINGLE(1, constants[freqs[selected_freq][0] - '0']);
-    DISP_SINGLE(2, constants[freqs[selected_freq][1] - '0']);
-    DISP_SINGLE(3, constants[freqs[selected_freq][2] - '0']);
 
-    if(digitalRead(BUTTON_TX_PIN)) {
+    matrix.writeDigitNum(0, 3);
+    matrix.writeDigitNum(1, freqs[selected_freq][0] - '0');
+    matrix.writeDigitNum(3, freqs[selected_freq][1] - '0');
+    matrix.writeDigitNum(4, freqs[selected_freq][2] - '0');
+    matrix.writeDisplay();
+
+    if(!digitalRead(BUTTON_TX_PIN)) {
       if(selected_freq == goal_freq) {
         module.win();
       } else {
