@@ -36,6 +36,13 @@ byte digits[12] = {
 };
 
 int brightness = 4;
+int win_melody[] = {};
+int win_melody_durations[] = {};
+int win_melody_len = 5;
+int lose_melody[] = {};
+int lose_melody_durations[] = {};
+int lose_melody_len = 4;
+
 
 byte max7219_reg_decodeMode  = 0x09;
 byte max7219_reg_intensity   = 0x0a;
@@ -58,6 +65,49 @@ int solves = 0;
 unsigned long dest_time;
 int num_modules;
 
+void playMelody(int *melody, int* durations, int melody_len) {
+  for (int thisNote = 0; thisNote < melody_len; thisNote++) {
+
+    int noteDuration = 1000 / durations[thisNote];
+    tone(SPEAKER_PIN, melody[thisNote], noteDuration);
+
+    // to distinguish the notes, set a minimum time between them.
+    int pauseBetweenNotes = noteDuration * 1.30;
+    delayWithUpdates(controller, pauseBetweenNotes);
+
+    // stop the tone playing:
+    noTone(SPEAKER_PIN);
+  }
+}
+
+void updateClock()
+
+void youLose() {
+  // Play lose music
+  playMelody(lose_melody, lose_melody_durations, lose_melody_len);
+  alpha1.clear();
+  alpha2.clear();
+  alpha1.writeDigitAscii(2, ' ');
+  alpha1.writeDigitAscii(3, 'B');
+  alpha2.writeDigitAscii(0, 'O');
+  alpha2.writeDigitAscii(1, 'O');
+  alpha2.writeDigitAscii(2, 'M');
+  alpha2.writeDigitAscii(3, ' ');
+  alpha1.writeDisplay();
+  alpha2.writeDisplay();
+
+  // Stop clock
+  while(1){;}
+}
+
+void youWin() {
+  // Play win music
+  playMelody(win_melody, win_melody_durations, win_melody_len);
+
+  // Stop clock
+  while(1){;}
+}
+
 void setup() {
   // Serial setup
   serial_port.begin(19200);
@@ -70,13 +120,12 @@ void setup() {
   pinMode(SPEAKER_PIN,   OUTPUT);
 
   // Config selection
-  // indentifyExternalConfig();
+  // Get all of this from ESP8266
   config.ports = 3;
   config.batteries = 1;
   config.indicators = 0;
   strncpy(config.serial, "KTANE1", 6);
   config.serial[6] = '\0';
-  // userSetClockTime();
 
   // Clock 7-segment setup
   pinMode(DATA_PIN, OUTPUT);
@@ -123,52 +172,13 @@ void setup() {
   dest_time = millis() + SOLVE_TIME;
 }
 
-void youLose() {
-  // Play lose music
-  tone(5, 340, 150);
-  delayWithUpdates(controller, 200);
-  tone(5, 140, 150);
-  delayWithUpdates(controller, 150);
-  tone(5, 340, 150);
-  delayWithUpdates(controller, 200);
-  tone(5, 140, 150);
-  delayWithUpdates(controller, 150);
-  tone(5, 340, 150);
-  delayWithUpdates(controller, 200);
-  tone(5, 140, 150);
-  delayWithUpdates(controller, 150);
-  noTone(5);
-  alpha1.clear();
-  alpha2.clear();
-  alpha1.writeDigitAscii(2, 'L');
-  alpha1.writeDigitAscii(3, 'O');
-  alpha2.writeDigitAscii(0, 'S');
-  alpha2.writeDigitAscii(1, 'E');
-  alpha2.writeDigitAscii(2, 'R');
-  alpha2.writeDigitAscii(3, ' ');
-  alpha1.writeDisplay();
-  alpha2.writeDisplay();
-  while(1){;}
-  // Blink "L05E" on clock or "U LOSE" on alphanumeric
-}
-
-void youWin() {
-  // Play win music
-  tone(5, 140, 150);
-  delayWithUpdates(controller, 200);
-  tone(5, 340, 150);
-  delayWithUpdates(controller, 150);
-  noTone(5);
-  while(1){;}
-  // Stop clock
-}
-
 void loop() {
   controller.interpretData();
 
   if(millis() > dest_time) {
     youLose();
   } else {
+    // Update clock
     unsigned long diff_time = dest_time - millis();
     int seconds = (diff_time / 1000)%60;
     int minutes = diff_time / 60000;
@@ -196,23 +206,9 @@ void loop() {
     solves = controller.getSolves();
   }
 
-  if(strikes >= 1) {
-    digitalWrite(STRIKE_1_PIN, HIGH);
-  } else {
-    digitalWrite(STRIKE_1_PIN, LOW);
-  }
-
-  if(strikes >= 2) {
-    digitalWrite(STRIKE_2_PIN, HIGH);
-  } else {
-    digitalWrite(STRIKE_2_PIN, LOW);
-  }
-
-  if(strikes >= 3) {
-    digitalWrite(STRIKE_3_PIN, HIGH);
-  } else {
-    digitalWrite(STRIKE_3_PIN, LOW);
-  }
+  digitalWrite(STRIKE_1_PIN, strikes >= 1);
+  digitalWrite(STRIKE_2_PIN, strikes >= 2);
+  digitalWrite(STRIKE_3_PIN, strikes >= 3);
 
   if(strikes >= 3){
     youLose();
