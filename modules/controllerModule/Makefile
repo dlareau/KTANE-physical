@@ -1,5 +1,10 @@
-BOARD_TAG    = nano328
-USER_LIB_PATH = $(realpath ../../Libraries)
+BOARD_TAG = nano
+BOARD_SUB = atmega328old
+
 MONITOR_PORT = /dev/ttyUSB0
-# include /usr/local/opt/arduino-mk/Arduino.mk
-include /usr/share/arduino/Arduino.mk
+
+ARDUINO_LIBS = U8g2 DSerial NeoICSerial Wire SPI KTANECommon Adafruit_GFX_Library Adafruit_LED_Backpack_Library
+
+CPPFLAGS ?= -DMY_ADDRESS=${ADDRESS}
+
+include $(ARDMK_DIR)/Arduino.mk

@@ -158,14 +158,6 @@ void youWin() {
   delayWithUpdates(controller, 200);
   tone(5, 340, 150);
   delayWithUpdates(controller, 150);
-  tone(5, 140, 150);
-  delayWithUpdates(controller, 200);
-  tone(5, 340, 150);
-  delayWithUpdates(controller, 150);
-  tone(5, 140, 150);
-  delayWithUpdates(controller, 200);
-  tone(5, 340, 150);
-  delayWithUpdates(controller, 150);
   noTone(5);
   while(1){;}
   // Stop clock
