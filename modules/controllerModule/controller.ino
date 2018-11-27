@@ -17,7 +17,6 @@
 #define STRIKE_2_PIN A1
 #define STRIKE_3_PIN A2
 #define SPEAKER_PIN 5
-#define SOLVE_TIME (240000) //4*60*1000
 
 // Constants
 byte digits[12] = {
@@ -55,6 +54,7 @@ Adafruit_AlphaNum4 alpha1 = Adafruit_AlphaNum4();
 Adafruit_AlphaNum4 alpha2 = Adafruit_AlphaNum4();
 
 config_t config;
+int num_minutes;
 NeoICSerial serial_port;
 DSerialMaster master(serial_port);
 KTANEController controller(master);
@@ -82,7 +82,6 @@ void playMelody(int *melody, int* durations, int melody_len) {
 
 void youLose() {
   // Play lose music
-  playMelody(lose_melody, lose_melody_durations, lose_melody_len);
   alpha1.clear();
   alpha2.clear();
   alpha1.writeDigitAscii(2, ' ');
@@ -93,6 +92,7 @@ void youLose() {
   alpha2.writeDigitAscii(3, ' ');
   alpha1.writeDisplay();
   alpha2.writeDisplay();
+  playMelody(lose_melody, lose_melody_durations, lose_melody_len);
 
   // Stop clock
   while(1){;}
@@ -110,8 +110,8 @@ void youWin() {
   alpha2.writeDigitAscii(3, 'R');
   alpha1.writeDisplay();
   alpha2.writeDisplay();
-  //playMelody(lose_melody, lose_melody_durations, lose_melody_len);
   playMelody(win_melody, win_melody_durations, win_melody_len);
+
   // Stop clock
   while(1){;}
 }
@@ -121,25 +121,25 @@ void setup() {
   serial_port.begin(19200);
   Serial.begin(19200);
 
-  // delay(1000);
-  // Serial.write(1);
-  // while (Serial.available() <= 0) {
-  //   delay(10);
-  // }
+  delay(1000);
+
+  raw_config_t recv_config;
+
+  Serial.write(1);
+  while (Serial.available() <= 0) {
+    delay(10);
+  }
+  for(int i = 0; i < 6; i++) {
+    ((char *)(&recv_config))[i] = Serial.read();
+  }
+  num_minutes = Serial.read();
+  raw_to_config(&recv_config, &config);
 
   // LED/Speaker setup
   pinMode(STRIKE_1_PIN,  OUTPUT);
   pinMode(STRIKE_2_PIN,  OUTPUT);
   pinMode(STRIKE_3_PIN,  OUTPUT);
   pinMode(SPEAKER_PIN,   OUTPUT);
-
-  // Config selection
-  // Get all of this from ESP8266
-  config.ports = 3;
-  config.batteries = 1;
-  config.indicators = 0;
-  strncpy(config.serial, "KTANE1", 6);
-  config.serial[6] = '\0';
 
   // Clock 7-segment setup
   pinMode(DATA_PIN, OUTPUT);
@@ -183,7 +183,7 @@ void setup() {
     controller.interpretData();
   }
 
-  dest_time = millis() + SOLVE_TIME;
+  dest_time = millis() + num_minutes*60*1000;
 }
 
 void loop() {

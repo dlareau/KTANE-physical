@@ -15,6 +15,7 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include "KTANECommon.h"
+#include <EEPROM.h>
 
 int led_pin = 2;
 
@@ -26,6 +27,7 @@ MDNSResponder mdns;
 ESP8266WebServer server(80);
 
 raw_config_t stored_config;
+int num_minutes;
 
 const char INDEX_HTML[] =
 "<!DOCTYPE HTML>"
@@ -43,6 +45,19 @@ const char INDEX_HTML[] =
 "<P>"
 "<b>Configure external features</b><br><br>"
 "Serial Number: <INPUT type=\"text\" name=\"serial_num\"><BR>"
+"Defuse time in minutes: "
+"<select name=\"num_minutes\">"
+"  <option value=\"0\">0</option>"
+"  <option value=\"1\">1</option>"
+"  <option value=\"2\">2</option>"
+"  <option value=\"3\">3</option>"
+"  <option value=\"4\">4</option>"
+"  <option value=\"5\">5</option>"
+"  <option value=\"6\" selected>6</option>"
+"  <option value=\"7\">7</option>"
+"  <option value=\"8\">8</option>"
+"  <option value=\"9\">9</option>"
+"</select><BR>"
 "Number of batteries: "
 "<select name=\"num_batteries\">"
 "  <option value=\"0\">0</option>"
@@ -77,11 +92,13 @@ void returnFail(String msg)
 void handleSubmit()
 {
   config_t config;
+  int addr = 0;
 
   if (!server.hasArg("serial_num") || !server.hasArg("num_batteries")) {
     return returnFail("BAD ARGS");
   }
   server.arg("serial_num").toCharArray(config.serial, 7);
+
   config.batteries = server.arg("num_batteries").toInt();
   config.indicators = ((!!server.hasArg("port1")) || 
                        ((!!server.hasArg("port2")) << 1)
@@ -91,7 +108,13 @@ void handleSubmit()
                   ((!!server.hasArg("port5")) << 2)
                  );
   config_to_raw(&config, &stored_config);
-  Serial.println(server.arg("serial_num"));
+
+  for(int i = 0; i < 6; i++){
+    byte b = ((byte *)(&stored_config))[i];
+    EEPROM.write(addr++, b);
+  }
+  // Write time
+  EEPROM.commit();
 
   server.send(200, "text/html", INDEX_HTML);
 }
@@ -125,7 +148,17 @@ void handleNotFound()
 void setup(void)
 {
   Serial.begin(115200);
+
+  EEPROM.begin(512);
+  int addr = 0;
+  for(int i = 0; i < 6; i++){
+    byte b = EEPROM.read(addr++);
+    ((byte *)(&stored_config))[i] = b;
+  }
+  // Read time
+
   pinMode(led_pin,  OUTPUT);
+
   WiFi.begin(ssid, password);
   Serial.println("");
 
@@ -155,8 +188,12 @@ void setup(void)
 void loop(void)
 {
   server.handleClient();
-  digitalWrite(led_pin, HIGH);   // turn the LED on (HIGH is the voltage level)
-  delay(100);                       // wait for a second
-  digitalWrite(led_pin, LOW);    // turn the LED off by making the voltage LOW
-  delay(100);                       // wait for a second
+  if(Serial.available() > 0) {
+    while(Serial.available() > 0){
+      // Throw away data
+      Serial.read();
+    }
+    Serial.write((char *)(&stored_config), 6);
+    Serial.write(num_minutes);
+  }
 }
