@@ -12,7 +12,7 @@ Not a real bomb.
 | Morse Code          |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|
 | The Button          |:heavy_check_mark:|                  |                  |
 | Maze                |                  |                  |                  |
-| Password            |:heavy_check_mark:|                  |                  |
+| Password            |:heavy_check_mark:|:heavy_check_mark:|                  |
 | Keypad (symbols)    |:heavy_check_mark:|                  |                  |
 | Switches            |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|
 | Letter Keys         |:heavy_check_mark:|                  |                  |
@@ -65,7 +65,7 @@ library suffers from the same upside/downside as the DSerial library in that it
 requires the code to periodically and continuously call the interpretData
 function. 
 
-A template for modules can be found [here](arduino/exampleModule/example.ino).
+A template for modules can be found [here](modules/exampleModule/example.ino).
 
 ### The Hardware
 
