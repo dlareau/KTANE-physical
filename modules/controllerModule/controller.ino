@@ -36,11 +36,11 @@ byte digits[12] = {
 };
 
 int brightness = 4;
-int win_melody[] = {};
-int win_melody_durations[] = {};
+int win_melody[] = {262, 330, 294, 370, 392};
+int win_melody_durations[] = {8, 8, 8, 8, 2};
 int win_melody_len = 5;
-int lose_melody[] = {};
-int lose_melody_durations[] = {};
+int lose_melody[] = {659, 622, 587, 554};
+int lose_melody_durations[] = {8,8,8,1};
 int lose_melody_len = 4;
 
 
@@ -80,8 +80,6 @@ void playMelody(int *melody, int* durations, int melody_len) {
   }
 }
 
-void updateClock()
-
 void youLose() {
   // Play lose music
   playMelody(lose_melody, lose_melody_durations, lose_melody_len);
@@ -102,8 +100,18 @@ void youLose() {
 
 void youWin() {
   // Play win music
+  alpha1.clear();
+  alpha2.clear();
+  alpha1.writeDigitAscii(2, 'W');
+  alpha1.writeDigitAscii(3, 'I');
+  alpha2.writeDigitAscii(0, 'N');
+  alpha2.writeDigitAscii(1, 'N');
+  alpha2.writeDigitAscii(2, 'E');
+  alpha2.writeDigitAscii(3, 'R');
+  alpha1.writeDisplay();
+  alpha2.writeDisplay();
+  //playMelody(lose_melody, lose_melody_durations, lose_melody_len);
   playMelody(win_melody, win_melody_durations, win_melody_len);
-
   // Stop clock
   while(1){;}
 }
@@ -112,6 +120,12 @@ void setup() {
   // Serial setup
   serial_port.begin(19200);
   Serial.begin(19200);
+
+  // delay(1000);
+  // Serial.write(1);
+  // while (Serial.available() <= 0) {
+  //   delay(10);
+  // }
 
   // LED/Speaker setup
   pinMode(STRIKE_1_PIN,  OUTPUT);

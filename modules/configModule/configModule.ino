@@ -16,6 +16,8 @@
 #include <ESP8266mDNS.h>
 #include "KTANECommon.h"
 
+int led_pin = 2;
+
 // Fill in your WiFi router SSID and password
 const char* ssid = "Workshop-2G";
 const char* password = "";
@@ -89,6 +91,7 @@ void handleSubmit()
                   ((!!server.hasArg("port5")) << 2)
                  );
   config_to_raw(&config, &stored_config);
+  Serial.println(server.arg("serial_num"));
 
   server.send(200, "text/html", INDEX_HTML);
 }
@@ -122,6 +125,7 @@ void handleNotFound()
 void setup(void)
 {
   Serial.begin(115200);
+  pinMode(led_pin,  OUTPUT);
   WiFi.begin(ssid, password);
   Serial.println("");
 
@@ -151,4 +155,8 @@ void setup(void)
 void loop(void)
 {
   server.handleClient();
+  digitalWrite(led_pin, HIGH);   // turn the LED on (HIGH is the voltage level)
+  delay(100);                       // wait for a second
+  digitalWrite(led_pin, LOW);    // turn the LED off by making the voltage LOW
+  delay(100);                       // wait for a second
 }
