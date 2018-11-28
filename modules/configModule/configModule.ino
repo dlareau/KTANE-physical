@@ -98,7 +98,7 @@ void handleSubmit()
     return returnFail("BAD ARGS");
   }
   server.arg("serial_num").toCharArray(config.serial, 7);
-
+  num_minutes = server.arg("num_minutes").toInt();
   config.batteries = server.arg("num_batteries").toInt();
   config.indicators = ((!!server.hasArg("port1")) || 
                        ((!!server.hasArg("port2")) << 1)
@@ -109,11 +109,12 @@ void handleSubmit()
                  );
   config_to_raw(&config, &stored_config);
 
-  for(int i = 0; i < 6; i++){
+  for(int i = 0; i < 7; i++){
     byte b = ((byte *)(&stored_config))[i];
     EEPROM.write(addr++, b);
   }
   // Write time
+  EEPROM.write(addr++, (byte)(num_minutes));
   EEPROM.commit();
 
   server.send(200, "text/html", INDEX_HTML);
@@ -147,42 +148,43 @@ void handleNotFound()
 
 void setup(void)
 {
-  Serial.begin(115200);
+  Serial.begin(19200);
 
   EEPROM.begin(512);
   int addr = 0;
-  for(int i = 0; i < 6; i++){
+  for(int i = 0; i < 7; i++){
     byte b = EEPROM.read(addr++);
     ((byte *)(&stored_config))[i] = b;
   }
   // Read time
+  num_minutes = EEPROM.read(addr++);
 
   pinMode(led_pin,  OUTPUT);
 
   WiFi.begin(ssid, password);
-  Serial.println("");
+  //Serial.println("");
 
   // Wait for connection
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    Serial.print(".");
+    //Serial.print(".");
   }
-  Serial.println("");
-  Serial.print("Connected to ");
-  Serial.println(ssid);
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+  //Serial.println("");
+  //Serial.print("Connected to ");
+  //Serial.println(ssid);
+  //Serial.print("IP address: ");
+  //Serial.println(WiFi.localIP());
 
   if (mdns.begin("ktane-setup", WiFi.localIP())) {
-    Serial.println("MDNS responder started");
+    //Serial.println("MDNS responder started");
   }
 
   server.on("/", handleRoot);
   server.onNotFound(handleNotFound);
 
   server.begin();
-  Serial.print("Connect to http://ktane-setup.local or http://");
-  Serial.println(WiFi.localIP());
+  //Serial.print("Connect to http://ktane-setup.local or http://");
+  //Serial.println(WiFi.localIP());
 }
 
 void loop(void)
@@ -193,7 +195,7 @@ void loop(void)
       // Throw away data
       Serial.read();
     }
-    Serial.write((char *)(&stored_config), 6);
+    Serial.write((uint8_t *)(&stored_config), 7);
     Serial.write(num_minutes);
   }
 }

@@ -79,7 +79,7 @@ void generateGrid(char* word) {
     }
 
     // check for more than one possible word
-    uint8_t word_checklist = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+    uint8_t word_checklist[35] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
     num_possible = 35;
     for(int i = 0; i < 5; i++) {
       for(int word_idx = 0; word_idx < 35; word_idx++) {

@@ -68,6 +68,8 @@ void maxSingle(byte reg, byte col, int load_pin, int clock_pin, int data_pin) {
   digitalWrite(load_pin,HIGH);
 }
 
+void(* softwareReset) (void) = 0;
+
 KTANEModule::KTANEModule(DSerialClient &dserial, int green_led_pin, 
                          int red_led_pin):_dserial(dserial) {
   memset(&_config, 0, sizeof(config_t));
@@ -95,6 +97,7 @@ void KTANEModule::interpretData(){
       memset(&_config, 0, sizeof(config_t));
       _got_reset = 1;
       digitalWrite(_green_led_pin, LOW);
+      softwareReset();
     } else if(out_message[0] == NUM_STRIKES) {
       _num_strikes = out_message[1];
     }

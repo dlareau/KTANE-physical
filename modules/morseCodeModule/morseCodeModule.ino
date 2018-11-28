@@ -45,9 +45,9 @@ void setup() {
   Serial.begin(19200);
   matrix.begin(0x70);
   
-  // while(!module.getConfig()){
-  //   module.interpretData();
-  // }
+  while(!module.getConfig()){
+    module.interpretData();
+  }
   randomSeed(analogRead(A0));
   pinMode(BUTTON_L_PIN, INPUT_PULLUP);
   pinMode(BUTTON_R_PIN, INPUT_PULLUP);
@@ -79,7 +79,7 @@ void setup() {
   morse_length = morse_index;
   morse_index = 0;
 
-  // module.sendReady();
+  module.sendReady();
 }
 
 void doMorse() {
@@ -92,7 +92,7 @@ void doMorse() {
 }
 
 void loop() {
-  // module.interpretData();
+  module.interpretData();
   doMorse();
 
   if(!module.is_solved){

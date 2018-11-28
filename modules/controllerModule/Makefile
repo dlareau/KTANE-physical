@@ -1,7 +1,7 @@
 BOARD_TAG = nano
 BOARD_SUB = atmega328old
 
-MONITOR_PORT = /dev/ttyUSB0
+MONITOR_PORT = /dev/ttyUSB2
 
 ARDUINO_LIBS = U8g2 DSerial NeoICSerial Wire SPI KTANECommon Adafruit_GFX_Library Adafruit_LED_Backpack_Library
 

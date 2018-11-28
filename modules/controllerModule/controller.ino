@@ -54,7 +54,7 @@ Adafruit_AlphaNum4 alpha1 = Adafruit_AlphaNum4();
 Adafruit_AlphaNum4 alpha2 = Adafruit_AlphaNum4();
 
 config_t config;
-int num_minutes;
+unsigned long num_minutes;
 NeoICSerial serial_port;
 DSerialMaster master(serial_port);
 KTANEController controller(master);
@@ -95,7 +95,9 @@ void youLose() {
   playMelody(lose_melody, lose_melody_durations, lose_melody_len);
 
   // Stop clock
-  while(1){;}
+  while(1){
+    delayWithUpdates(controller, 10);
+  }
 }
 
 void youWin() {
@@ -113,7 +115,32 @@ void youWin() {
   playMelody(win_melody, win_melody_durations, win_melody_len);
 
   // Stop clock
-  while(1){;}
+  while(1){
+    delayWithUpdates(controller, 10);
+  }
+}
+
+void getConfigESP(){
+  raw_config_t recv_config;
+
+  Serial.write(1);
+  while (Serial.available() <= 0) {
+    delay(10);
+  }
+  for(int i = 0; i < 7; i++) {
+    ((char *)(&recv_config))[i] = Serial.read();
+  }
+  num_minutes = Serial.read();
+  raw_to_config(&recv_config, &config);
+}
+
+void getConfigManual(){
+  config.ports = 3;
+  config.batteries = 1;
+  config.indicators = 0;
+  strncpy(config.serial, "KTANE1", 6);
+  config.serial[6] = '\0';
+  num_minutes = 6;
 }
 
 void setup() {
@@ -123,17 +150,8 @@ void setup() {
 
   delay(1000);
 
-  raw_config_t recv_config;
-
-  Serial.write(1);
-  while (Serial.available() <= 0) {
-    delay(10);
-  }
-  for(int i = 0; i < 6; i++) {
-    ((char *)(&recv_config))[i] = Serial.read();
-  }
-  num_minutes = Serial.read();
-  raw_to_config(&recv_config, &config);
+  //getConfigESP();
+  getConfigManual();
 
   // LED/Speaker setup
   pinMode(STRIKE_1_PIN,  OUTPUT);
@@ -177,7 +195,8 @@ void setup() {
   delay(1000);
   num_modules = master.identifyClients();
 
-  // controller.sendReset() followed by some interpretData?
+  controller.sendReset();
+  delayWithUpdates(controller, 500);
   controller.sendConfig(&config);
   while(!controller.clientsAreReady()) {
     controller.interpretData();
@@ -209,6 +228,8 @@ void loop() {
     delayWithUpdates(controller, 150);
     noTone(5);
     strikes = controller.getStrikes();
+    Serial.println("STRIKE!");
+    Serial.println(strikes);
   }
 
   if(solves < controller.getSolves()){

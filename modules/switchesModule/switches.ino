@@ -56,9 +56,9 @@ void setup() {
   serial_port.begin(19200);
   Serial.begin(19200);
   
-  // while(!module.getConfig()){
-  //   module.interpretData();
-  // }
+  while(!module.getConfig()){
+    module.interpretData();
+  }
 
   for(int i = 0; i < 10; i++){
     bad[i] = (~bad[i]) & 0x1F;
