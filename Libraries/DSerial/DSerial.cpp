@@ -100,8 +100,8 @@ DSerialMaster::DSerialMaster(Stream &port):_stream(port){
   _state = 0;
   _num_clients = 0;
   memset(_clients, 0, MAX_CLIENTS);
-  stringQueueInit(&_in_messages, MAX_QUEUE_SIZE);
-  stringQueueInit(&_out_messages, MAX_QUEUE_SIZE);
+  stringQueueInit(&_in_messages, MAX_MASTER_QUEUE_SIZE);
+  stringQueueInit(&_out_messages, MAX_MASTER_QUEUE_SIZE);
 }
 
 /** @brief sends a data string to the specified client.
@@ -308,8 +308,8 @@ int DSerialMaster::doSerial(){
 DSerialClient::DSerialClient(Stream &port, uint8_t client_number):_stream(port){
   _state = 0;
   _client_number = client_number;
-  stringQueueInit(&_in_messages, MAX_QUEUE_SIZE);
-  stringQueueInit(&_out_messages, MAX_QUEUE_SIZE);
+  stringQueueInit(&_in_messages, MAX_CLIENT_QUEUE_SIZE);
+  stringQueueInit(&_out_messages, MAX_CLIENT_QUEUE_SIZE);
 }
 
 /** @brief sends a data string to the master.
