@@ -13,8 +13,8 @@ KTANEModule module(client, 3, 4);
 #define WHITE 1
 #define BLUE 2
 #define YELLOW 3
-#define BLACK 4
-#define RED 5
+#define RED 4
+#define BLACK 5
 
 int wires[6] = {0,0,0,0,0,0};
 int color_count[6] = {0,0,0,0,0,0};
