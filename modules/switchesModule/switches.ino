@@ -91,7 +91,7 @@ void loop() {
   int loop_broke = 0;
 
   // Most of the "bad_counter" stuff is just debouncing logic.
-  delay(10);
+  delayWithUpdates(module, 10);
   if(!module.is_solved){
     last_switch_state = switch_state;
     switch_state = 0;
