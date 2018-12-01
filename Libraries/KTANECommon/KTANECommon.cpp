@@ -135,6 +135,7 @@ int KTANEModule::sendReady() {
   char str[2] = {READY, '\0'};
   int result = _dserial.sendData(str);
   if(result){
+    digitalWrite(_red_led_pin, LOW);
     digitalWrite(_green_led_pin, HIGH);
     delayWithUpdates(*this, 300);
     digitalWrite(_green_led_pin, LOW);
