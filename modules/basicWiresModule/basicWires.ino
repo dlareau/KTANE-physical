@@ -168,18 +168,20 @@ void loop() {
 
   if(!module.is_solved){
     for(int i = 0; i < 6; i++) {
-      if(wires[i] != voltageToWire(analogRead(i))) {
-        delay(10);
-        if(wires[i] != voltageToWire(analogRead(i))) { // Check again for debouncing reasons
-          if(i == cut_index) {
-            module.win();
-          } else {
-            module.strike();
-            wires[i] = voltageToWire(analogRead(i));
+      if(wires[i] != 0){
+        if(wires[i] != voltageToWire(analogRead(i))) {
+          delayWithUpdates(module, 100);
+          if(wires[i] != voltageToWire(analogRead(i))) { // Check again for debouncing reasons
+            if(i == cut_index) {
+              module.win();
+            } else {
+              module.strike();
+              wires[i] = voltageToWire(analogRead(i));
+            }
           }
         }
+        delayWithUpdates(module, 10);
       }
-      delayWithUpdates(module, 10);
     }
   }
 }
