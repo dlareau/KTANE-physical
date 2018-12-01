@@ -1,24 +1,28 @@
 #!/bin/bash
 
 controllerModule="controllerModule"
+configModule="configModule"
 modules=(
 	"basicWiresModule"
 	"exampleModule"
 	"memoryModule"
 	"simonSaysModule"
 	"switchesModule"
+	"morseCodeModule"
 )
 
 controllerPort="/dev/cu.usbmodem14211"
+configPort="/dev/cu.usbmodem14211"
 ports=(
-	"/dev/cu.usbmodem14221"		# basicWiresModule
+	"/dev/cu.usbmodemUSB0"		# basicWiresModule
 	""							# exampleModule
-	"/dev/cu.usbmodem14241"		# memoryModule
-	"/dev/cu.usbmodem14251"		# simonSaysModule
-	""							# switchesModule
+	"/dev/cu.usbmodemUSB1"		# memoryModule
+	"/dev/cu.usbmodemUSB2"		# simonSaysModule
+	"/dev/cu.usbmodemUSB3"		# switchesModule
+	"/dev/cu.usbmodemUSB4"		# morseCodeModule
 )
 
-ADDRESS=2
+ADDRESS=5
 
 case "$1" in
 	"")
@@ -27,6 +31,7 @@ case "$1" in
 			ADDRESS=$((ADDRESS + 1))
 		done 
 		make -C "$controllerModule"
+		make -C "$configModule"
 		;;
 
 	"clean")
@@ -35,6 +40,7 @@ case "$1" in
 			ADDRESS=$((ADDRESS + 1))
 		done
 		make -C "$controllerModule" clean
+		make -C "$configModule" clean
 		;;
 
 	"upload")
