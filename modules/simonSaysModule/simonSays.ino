@@ -86,6 +86,10 @@ void setup() {
   pinMode(led_pins[1], OUTPUT);
   pinMode(led_pins[2], OUTPUT);
   pinMode(led_pins[3], OUTPUT);
+  digitalWrite(led_pins[0], LOW);
+  digitalWrite(led_pins[1], LOW);
+  digitalWrite(led_pins[2], LOW);
+  digitalWrite(led_pins[3], LOW);
 
   while(!module.getConfig()){
     module.interpretData();
