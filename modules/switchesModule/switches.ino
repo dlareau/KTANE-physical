@@ -67,11 +67,14 @@ void setup() {
     good[i] = (~good[i]) & 0x1F;
   }
 
+  switch_state = 0;
+  for(int i = 0; i < 5; i++) {
+    switch_state |= (digitalRead(switches[i]) << i);
+  }
+
   randomSeed(analogRead(A5));
-  int test = random(0,22);
-  goal = good[test];
-  Serial.println(test);
-  Serial.println(goal);
+  int goalIdx = random(0,16);
+  goal = goal_matrix[switch_state][goalIdx];
 
   for(int i = 0; i < 5; i++) {
     pinMode(switches[i], INPUT_PULLUP);
