@@ -150,8 +150,8 @@ void setup() {
 
   delay(1000);
 
-  //getConfigESP();
-  getConfigManual();
+  getConfigESP();
+  //getConfigManual();
 
   // LED/Speaker setup
   pinMode(STRIKE_1_PIN,  OUTPUT);
