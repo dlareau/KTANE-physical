@@ -84,7 +84,11 @@ void setup() {
 
 void loop() {
   module.interpretData();
+  int bad_counter = 0;
+  int loop_broke = 0;
 
+  // Most of the "bad_counter" stuff is just debouncing logic.
+  delay(10);
   if(!module.is_solved){
     last_switch_state = switch_state;
     switch_state = 0;
@@ -94,8 +98,16 @@ void loop() {
     if(switch_state != last_switch_state) {
       for(int i = 0; i < 10; i++){
         if(switch_state == bad[i]){
-          module.strike();
+          loop_broke = 1;
+          bad_counter += 1;
+          if(bad_counter >= 3){
+            module.strike();
+          }
+          break;
         }
+      }
+      if(!loop_broke){
+        bad_counter = 0;
       }
       if(switch_state == goal){
         module.win();
