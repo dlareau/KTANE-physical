@@ -11,6 +11,7 @@ KTANEModule module(client, 3, 4);
 #define YELLOW 2
 #define GREEN 3
 #define BLUE 4
+#define SPEAKER_PIN 2
 
 int led_pins[4] = {15, 10, 11, 5};
 int button_pins[4] = {14, 7, 12, 6};
@@ -121,6 +122,11 @@ void loop() {
           if(button_stage == stage) {
             stage++;
             button_stage = 0;
+            // tone(SPEAKER_PIN, 140, 150);
+            // delayWithUpdates(module, 200);
+            // tone(SPEAKER_PIN, 340, 150);
+            // delayWithUpdates(module, 150);
+            // noTone(SPEAKER_PIN);
           } else {
             button_stage++;
           }
