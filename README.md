@@ -4,7 +4,7 @@ Not a real bomb.
 
 ### Planned Modules
 
-| Module Name         | Planned          | Coded            | Made             |
+| Module Name         | Sketched         | Coded            | Made             |
 | ------------------- |:----------------:|:----------------:|:----------------:|
 | Memory              |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|
 | Simon Says          |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|
@@ -71,9 +71,9 @@ A template for modules can be found [here](modules/exampleModule/example.ino).
 
 The current iteration of the hardware is Version 1. V1 consists of one
 controller module and up to five swappable, playable modules in a suitcase as
-an enclosure. The modules are each made out of a foamboard enclosure and 
-connect to the main bus through directional male/female 4 pin plugs intended for
-LED strips. The major limiting factor imposed by V1 is the 1.25" height limit on
-user interface protrusions needed to allow the case to close. 
+an enclosure. The modules connect to the main bus through directional 
+male/female 4 pin plugs intended for LED strips. The major limiting factor
+imposed by V1 is the 1.25" height limit on user interface protrusions needed
+to allow the case to close. 
 
 
