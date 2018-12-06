@@ -10,7 +10,7 @@ NeoICSerial serial_port;
 DSerialClient client(serial_port, MY_ADDRESS);
 KTANEModule module(client, 3, 4);
 
-uint8_t switch_state, last_switch_state;
+uint8_t switch_state, last_switch_state, last_strike_state;
 int leds[5] = {12,11,7,6,5};
 int switches[5] = {A0, A1, A2, A3, A4};
 uint8_t bad[10] = {4,11,15,18,19,23,24,26,28,30};
@@ -87,8 +87,6 @@ void setup() {
 
 void loop() {
   module.interpretData();
-  int bad_counter = 0;
-  int loop_broke = 0;
 
   // Most of the "bad_counter" stuff is just debouncing logic.
   delayWithUpdates(module, 10);
@@ -100,17 +98,10 @@ void loop() {
     }
     if(switch_state != last_switch_state) {
       for(int i = 0; i < 10; i++){
-        if(switch_state == bad[i]){
-          loop_broke = 1;
-          bad_counter += 1;
-          if(bad_counter >= 3){
-            module.strike();
-          }
-          break;
+        if(switch_state == bad[i] && switch_state != last_strike_state){
+          module.strike();
+          last_strike_state = switch_state;
         }
-      }
-      if(!loop_broke){
-        bad_counter = 0;
       }
       if(switch_state == goal){
         module.win();

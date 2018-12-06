@@ -113,7 +113,7 @@ void setup() {
         wire_to_cut = 1; // First wire
       } else if(color_count[BLUE] == 1) {
         wire_to_cut = 1; // First wire
-      } else if(color_count[YELLOW] <= 1) {
+      } else if(color_count[YELLOW] > 1) {
         wire_to_cut = num_wires; // Last wire
       } else {
         wire_to_cut = 2; // Second wire
