@@ -17,6 +17,7 @@ int led_pins[4] = {15, 10, 11, 5};
 int button_pins[4] = {14, 7, 12, 6};
 
 unsigned long last_button_action = 0;
+int last_action_multiplier;
 int button_state = 0;
 int old_button_state = 0;
 int button_stage = 0;
@@ -110,9 +111,10 @@ void loop() {
     int vowel = module.serialContainsVowel();
     int strikes = module.getNumStrikes();
     update_lights();
-    if(millis()-last_button_action > 10) {
+    if(millis()-last_button_action > (10 * last_action_multiplier)) {
       button_state = get_button();
       last_button_action = millis();
+      last_action_multiplier = 1;
     }
     if(button_state != old_button_state) {
       old_button_state = button_state;
@@ -127,6 +129,7 @@ void loop() {
             // tone(SPEAKER_PIN, 340, 150);
             // delayWithUpdates(module, 150);
             // noTone(SPEAKER_PIN);
+            last_action_multiplier = 100;
           } else {
             button_stage++;
           }
@@ -134,6 +137,7 @@ void loop() {
             module.win();
           }
         } else {
+          button_stage = 0;
           module.strike();
         }
       }
