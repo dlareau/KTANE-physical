@@ -76,9 +76,6 @@ void setup() {
   serial_port.begin(19200);
   Serial.begin(19200);
 
-  randomSeed(analogRead(A5));
-  num_stages = random(3, MAX_NUM_STAGES + 1);
-
   pinMode(button_pins[0], INPUT);
   pinMode(button_pins[1], INPUT);
   pinMode(button_pins[2], INPUT);
@@ -95,6 +92,9 @@ void setup() {
   while(!module.getConfig()){
     module.interpretData();
   }
+
+  randomSeed(config_to_seed(module.getConfig()));
+  num_stages = random(3, MAX_NUM_STAGES + 1);
 
   for(int i = 0; i < num_stages; i++) {
     stage_colors[i] = random(0, 4);

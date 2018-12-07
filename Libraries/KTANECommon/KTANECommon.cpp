@@ -29,6 +29,19 @@ void raw_to_config(raw_config_t *raw_config, config_t *config) {
   config->serial[6] = '\0';
 }
 
+unsigned long config_to_seed(config_t *config){
+  unsigned long retval = 0;
+  int i;
+
+  for(i = 5; i >= 0; i--){
+    retval = (retval << 6) + (int)(config->serial[i] - ' ');
+  }
+  retval = retval * (3 + config->ports);
+  retval = retval * (5 + config->batteries);
+  retval = retval * (7 + config->indicators);
+  return retval;
+}
+
 void delayWithUpdates(KTANEModule &module, unsigned int length) {
   unsigned long start_millis = millis();
   while(millis() - start_millis < length){

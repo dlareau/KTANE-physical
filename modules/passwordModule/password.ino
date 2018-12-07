@@ -107,18 +107,16 @@ void setup() {
 
   u8g2.begin();
   u8g2.setFont(u8g2_font_inb27_mf);
-  
-  randomSeed(analogRead(0));
-  int word_idx = (random(100) * random(100) + random(100))%35;
-  correct_str = possible_words[word_idx];
-  Serial.println(correct_str);
-  generateGrid(correct_str);
-  
 
   // while(!module.getConfig()){
   //   module.interpretData();
   // }
 
+  randomSeed(config_to_seed(module.getConfig()));
+  int word_idx = random(35);
+  correct_str = possible_words[word_idx];
+  Serial.println(correct_str);
+  generateGrid(correct_str);
 
   // module.sendReady();
 }

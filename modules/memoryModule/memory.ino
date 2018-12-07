@@ -224,15 +224,16 @@ void setup() {
   }
   DISP_SINGLE(max7219_reg_intensity, 0x0f & 0x0f); // the first 0x0f is the value you can set
 
-  randomSeed(analogRead(0));
+  while(!module.getConfig()){
+    module.interpretData();
+  }
+
+  randomSeed(config_to_seed(module.getConfig()));
 
   // Generate numbers
   generateRandomNumbers();
   updateDisplays();
 
-  while(!module.getConfig()){
-    module.interpretData();
-  }
   module.sendReady();
 }
 

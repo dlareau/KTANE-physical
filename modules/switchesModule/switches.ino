@@ -72,7 +72,7 @@ void setup() {
     switch_state |= (digitalRead(switches[i]) << i);
   }
 
-  randomSeed(analogRead(A5));
+  randomSeed(config_to_seed(module.getConfig()));
   int goalIdx = random(0,16);
   goal = goal_matrix[switch_state][goalIdx];
 

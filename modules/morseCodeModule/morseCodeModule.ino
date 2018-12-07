@@ -48,7 +48,7 @@ void setup() {
   while(!module.getConfig()){
     module.interpretData();
   }
-  randomSeed(analogRead(A0));
+  randomSeed(config_to_seed(module.getConfig()));
   pinMode(BUTTON_L_PIN, INPUT_PULLUP);
   pinMode(BUTTON_R_PIN, INPUT_PULLUP);
   pinMode(BUTTON_TX_PIN, INPUT_PULLUP);
