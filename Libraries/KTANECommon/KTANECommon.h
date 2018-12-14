@@ -57,12 +57,19 @@ class KTANEModule {
   public:
     KTANEModule(DSerialClient &dserial, int green_led_pin, int red_led_pin);
     void interpretData();
-    int strike();
-    int sendStrike();
-    int win();
-    int sendSolve();
-    int sendReady();
     config_t *getConfig();
+    int strike();
+    int win();
+    int sendReady();
+    int getNumStrikes();
+    int is_solved;
+    int sendDebugMsg(char *msg);
+    
+    // Helper functions for strike() and win()
+    int sendSolve();
+    int sendStrike();
+
+    // Various config getters
     int getLitFRK();
     int getLitCAR();
     int getNumBatteries();
@@ -72,9 +79,9 @@ class KTANEModule {
     char getSerialDigit(int index);
     int serialContains(char c);
     int serialContainsVowel();
-    int getNumStrikes();
+    
+    // currently useless because of hard reset
     int getReset();
-    int is_solved;
   private:
     DSerialClient &_dserial;
     config_t _config;

@@ -166,6 +166,10 @@ int KTANEModule::sendReady() {
   return result;
 }
 
+int KTANEModule::sendDebugMsg(char *msg) {
+  return _dserial.sendData(msg);
+}
+
 config_t *KTANEModule::getConfig() {
   if(_got_config){
     return &_config;
