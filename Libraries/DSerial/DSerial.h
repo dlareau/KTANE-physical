@@ -71,6 +71,7 @@
 #define READ (char)0xD2
 #define NO_DATA (char)0xB0
 #define PING (char)0xB1
+#define ESC (char)0x9B
 
 #define TIMEOUT 50
 #define MAX_CLIENTS 16

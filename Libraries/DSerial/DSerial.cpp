@@ -31,6 +31,7 @@ int readPacket(Stream &s, char *buffer){
   static int index = 0;
   static char buf[MAX_MSG_LEN+1];
   static char data_parity = 0;
+  static int escape_next = 0;
   char rc;
   int passed_parity = 0;
 
@@ -44,8 +45,13 @@ int readPacket(Stream &s, char *buffer){
     else if (in_packet == 1) {
       data_parity ^= rc;
       if (rc != END) {
-        buf[index] = rc;
-        index++;
+        if(rc == ESC) { // next char was greater than 0x7F, add 0x80 to it.
+          escape_next = 1;
+        } else {
+          buf[index] = rc | (escape_next << 7);
+          escape_next = 0;
+          index++;
+        }
       }
       if(rc == END || index >= MAX_MSG_LEN){
         index--;
@@ -84,7 +90,14 @@ int sendPacket(Stream &s, char *message){
     data_parity = data_parity ^ (uint8_t)message[i];
   }
   s.write(START);
-  s.write(message);
+  for (int i = 0; message[i] != 0; i++) {
+    if((message[i] & 0x80) == 0) {
+      s.write(message[i]);
+    } else {  // special case for bytes over 0x7F
+      s.write(ESC);
+      s.write(message[i] & 0x7F);
+    }
+  }
   s.write((START ^ data_parity ^ END) & 0x7F);
   s.write(END);
   return 1;
