@@ -98,18 +98,28 @@ KTANEModule::KTANEModule(DSerialClient &dserial, int green_led_pin,
 
 void KTANEModule::interpretData(){
   char out_message[MAX_MSG_LEN];
+  unsigned long start_millis;
+  
   _dserial.doSerial();
   if(_dserial.getData(out_message)) {
     if(out_message[0] == CONFIG && strlen(out_message) == 8) {
       _got_config = 1;
       raw_to_config((raw_config_t *)(out_message + 1), &_config);
     } else if(out_message[0] == RESET) {
+      // All of the stuff before softwareReset() is currently useless
+      //  but is kept in case the hard-reset call is removed.
       is_solved = 0;
       _num_strikes = 0;
       _got_config = 0;
       memset(&_config, 0, sizeof(config_t));
       _got_reset = 1;
       digitalWrite(_green_led_pin, LOW);
+
+      // Delay for a small bit to allow client to ACK the reset.
+      start_millis = millis();
+      while(millis() - start_millis < 300){
+        _dserial.doSerial();
+      }
       softwareReset();
     } else if(out_message[0] == NUM_STRIKES) {
       _num_strikes = out_message[1];
