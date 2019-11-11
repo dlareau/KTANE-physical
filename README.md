@@ -38,7 +38,7 @@ controller module, I opted for a multidrop serial bus.
 The downside of a multidrop bus is that some form of arbitration is
 needed to stop bus contention. This is solved by the DSerial library I wrote
 for this project. The DSerial library implements a layer on top of any Arduino
-[Stream](www.arduino.cc/reference/en/language/functions/communication/stream/) 
+[Stream](http://www.arduino.cc/reference/en/language/functions/communication/stream/) 
 interface. The DSerial library operates with one master and many clients and 
 in addition to managing bus contention, it makes a best effort to guarantee
 that each message will be delivered to the desired client exactly once. To this
