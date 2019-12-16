@@ -19,3 +19,4 @@ char *stringQueueRemove(stringQueue_t *q);
 int stringQueueIsEmpty(stringQueue_t *q);
 int stringQueueIsFull(stringQueue_t *q);
 void stringQueueDestroy(stringQueue_t *q);
+void stringQueuePrint(stringQueue_t *q);
