@@ -57,7 +57,7 @@
 
 #pragma once
 #include "Arduino.h"
-#include "stringQueue.h"
+#include "pointerQueue.h"
 
 // Control characters
 // All of the form 0x80 + (most appropriate ascii character)
@@ -99,8 +99,8 @@ class DSerialMaster {
   private:
     Stream   &_stream;
     uint8_t   _state;
-    stringQueue_t _in_messages;
-    stringQueue_t _out_messages;
+    pointerQueue_t _in_messages;
+    pointerQueue_t _out_messages;
     uint8_t   _num_clients;
     uint8_t   _clients[MAX_CLIENTS];
 };
@@ -115,7 +115,7 @@ class DSerialClient {
   private:
     Stream   &_stream;
     uint8_t   _state;
-    stringQueue_t _in_messages;
-    stringQueue_t _out_messages;
+    pointerQueue_t _in_messages;
+    pointerQueue_t _out_messages;
     uint8_t   _client_number;
 };

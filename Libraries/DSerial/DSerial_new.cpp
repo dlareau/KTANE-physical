@@ -7,7 +7,7 @@
 #include "Arduino.h"
 #include "DSerial.h"
 #include <string.h>
-#include "stringQueue.h"
+#include "pointerQueue.h"
 
 /** @brief Reads a packet from the specified stream if one is available
  *
@@ -41,13 +41,9 @@ DSerialMaster::DSerialMaster(Stream &port):_stream(port){
 
 /** @brief sends a data string to the specified client.
  *
- *  Internally, this function enqueues the data to be written when convenient.
- *  This function fails when there is not enough memory to enqueue the message
- *  or when the queue is full.
+ *  in: packet, client, len
+ *  out: retval
  *
- *  @param client_id  The ID of the client to write to
- *  @param data       The data to write to the given client
- *  @return A status code indicating success or failure
  */
 int DSerialMaster::sendData(uint8_t client_id, char *data){
 
@@ -55,8 +51,9 @@ int DSerialMaster::sendData(uint8_t client_id, char *data){
 
 /** @brief Retrieve data if there is any to get
  *
- *  @param buffer A string to populate with the possible data
- *  @return The ID of the client that sent the message, 0 if no data.
+ *  in: NONE
+ *  out: packet, client, len, retval
+ *
  */
 int DSerialMaster::getData(char *buffer){
 
@@ -64,10 +61,9 @@ int DSerialMaster::getData(char *buffer){
 
 /** @brief runs a client search
  *
- *  A client search consists of pinging each client address between 1 and
- *  MAX_CLIENTS. If the client responds, then it gets put in our array.
+ *  in: NONE
+ *  out: numClients
  *
- *  @return The number of clients found
  */
 int DSerialMaster::identifyClients() {
 

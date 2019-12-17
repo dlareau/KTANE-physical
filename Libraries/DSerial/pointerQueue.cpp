@@ -1,6 +1,6 @@
-#include "stringQueue.h"
+#include "pointerQueue.h"
 
-int stringQueueInit(stringQueue_t *q, uint8_t size) {
+int pointerQueueInit(pointerQueue_t *q, uint8_t size) {
 	size = size + 1; // leave room for buffer NULL item
 	void *ptr = malloc(size * sizeof(char*));
 	if(ptr) {
@@ -16,8 +16,8 @@ int stringQueueInit(stringQueue_t *q, uint8_t size) {
 	return 0;
 }
 
-int stringQueueAdd(stringQueue_t *q, char* s) {
-	if(!stringQueueIsFull(q)) {
+int pointerQueueAdd(pointerQueue_t *q, char* s) {
+	if(!pointerQueueIsFull(q)) {
 		q->data[q->head] = s;
 		q->head = (q->head + 1) % q->size;
 		return 1;
@@ -25,9 +25,9 @@ int stringQueueAdd(stringQueue_t *q, char* s) {
 	return 0;
 }
 
-char *stringQueueRemove(stringQueue_t *q) {
+char *pointerQueueRemove(pointerQueue_t *q) {
 	char *retval;
-	if(!stringQueueIsEmpty(q)) {
+	if(!pointerQueueIsEmpty(q)) {
 		retval = q->data[q->tail];
 		q->data[q->tail] = NULL;
 		q->tail = (q->tail + 1) % q->size;
@@ -36,19 +36,19 @@ char *stringQueueRemove(stringQueue_t *q) {
 	return NULL;
 }
 
-int stringQueueIsEmpty(stringQueue_t *q) {
+int pointerQueueIsEmpty(pointerQueue_t *q) {
 	return q->head == q->tail;
 }
 
-int stringQueueIsFull(stringQueue_t *q) {
+int pointerQueueIsFull(pointerQueue_t *q) {
 	return ((q->head + 1) % q->size) == q->tail;
 }
 
-void stringQueueDestroy(stringQueue_t *q) {
+void pointerQueueDestroy(pointerQueue_t *q) {
 	free(q->data);
 }
 
-void stringQueuePrint(stringQueue_t *q) {
+void pointerQueuePrint(pointerQueue_t *q) {
 	printf("Size: %d, Head: %d, Tail: %d\n", q->size, q->head, q->tail);
 	for (int i = 0; i < q->size; ++i)
 	{
@@ -62,7 +62,7 @@ void stringQueuePrint(stringQueue_t *q) {
 			printf("   ");
 		}
 		if(q->data[i] != NULL){
-			printf("%d: %s\n", i, q->data[i]);
+			printf("%d: %p\n", i, q->data[i]);
 		} else {
 			printf("%d: NULL\n", i);
 		}
