@@ -105,6 +105,10 @@ class Decoder(srd.Decoder):
         self.message_bytes_cl = []
         self.transaction_state = "WAITING"
         self.transaction_message = ""
+        self.escape_next_ms = False
+        self.escape_next_cl = False
+        self.escape_parity_ms = 0
+        self.escape_parity_cl = 0
 
     def start(self):
         self.out_ann = self.register(srd.OUTPUT_ANN)
@@ -129,11 +133,19 @@ class Decoder(srd.Decoder):
 
         if rxtx == 0:
             if len(self.message_bytes_ms) == 0:
+                self.escape_parity_ms = 0
                 self.ss_pkt_ms = ss
                 if(datavalue != 0x82):
                     self.es_pkt_ms = es
                     self.putxms([0, ["BAD"]])
                     return
+            if(datavalue == 0x9B):
+                self.escape_next_ms = True
+                self.escape_parity_ms = 1 - self.escape_parity_ms
+                return
+            if(self.escape_next_ms):
+                self.escape_next_ms = False
+                datavalue = datavalue + 0x80
 
             self.message_bytes_ms.append(datavalue)
 
@@ -141,6 +153,9 @@ class Decoder(srd.Decoder):
                 return
 
             parity = reduce(lambda i, j: int(i) ^ int(j), self.message_bytes_ms)
+            if(self.escape_parity_ms):
+                parity = parity ^ 0x9B
+
             if(self.message_bytes_ms[0] != 0x82):
                 msgs = ["ERR: NO START"]
             elif(self.message_bytes_ms[-1] != 0x83):
@@ -185,11 +200,20 @@ class Decoder(srd.Decoder):
 
         if rxtx == 1:
             if len(self.message_bytes_cl) == 0:
+                self.escape_parity_cl = 0
                 self.ss_pkt_cl = ss
                 if(datavalue != 0x82):
                     self.es_pkt_cl = es
                     self.putxcl([0, ["BAD"]])
                     return
+
+            if(datavalue == 0x9B):
+                self.escape_next_cl = True
+                self.escape_parity_cl = 1 - self.escape_parity_cl
+                return
+            if(self.escape_next_cl):
+                self.escape_next_cl = False
+                datavalue = datavalue + 0x80
 
             self.message_bytes_cl.append(datavalue)
 
@@ -197,6 +221,8 @@ class Decoder(srd.Decoder):
                 return
 
             parity = reduce(lambda i, j: int(i) ^ int(j), self.message_bytes_cl)
+            if(self.escape_parity_cl):
+                parity = parity ^ 0x9B
             if(self.message_bytes_cl[0] != 0x82):
                 msgs = ["ERR: NO START"]
             elif(self.message_bytes_cl[-1] != 0x83):

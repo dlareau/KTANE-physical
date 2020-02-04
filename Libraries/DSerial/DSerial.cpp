@@ -95,6 +95,7 @@ int sendPacket(Stream &s, char *message){
       s.write(message[i]);
     } else {  // special case for bytes over 0x7F
       s.write(ESC);
+      data_parity = data_parity ^ ESC;
       s.write(message[i] & 0x7F);
     }
   }
