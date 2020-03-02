@@ -2,6 +2,9 @@
 A physical version of the game "Keep Talking and Nobody Explodes". 
 Not a real bomb.
 
+## Update: 3/2/2020
+I am currently making progress on Version 2 of KTANE-physical. There are some major under the hood things that need to be done (such as replacing DSerial and designing PCBs) before new progress can be made. The "most-working" commit for V1 is currently commit aa4ee07, which is what should be used for attempts at replicating V1. 
+
 ### Planned Modules
 
 | Module Name         | Sketched         | Coded            | Made             |
